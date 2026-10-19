@@ -1,1 +1,6 @@
-{ "cleanUrls": true }
+{
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "www.bvideox.com" }], "destination": "https://bvideox.com/:path*", "permanent": true }
+  ]
+}
