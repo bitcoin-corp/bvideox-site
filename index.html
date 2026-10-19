@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--ink:#f4f1e8;--mute:#9a968b;--line:rgba(255,95,87,.18);--red:#ff5f57;--gold:#ffd24d;--card:#0b0b0c}
+:root{--bg:#000;--ink:#f4f1e8;--mute:#9a968b;--line:rgba(255,210,77,.16);--red:#ffd24d;--gold:#ffd24d;--card:#0b0b0c}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 'IBM Plex Sans',system-ui,sans-serif;overflow-x:hidden}
@@ -28,12 +28,12 @@ a{color:inherit}
 .wrap{max-width:1160px;margin:0 auto;padding:0 20px}
 .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:700 22px 'Space Grotesk'}
-.brand span span{color:var(--red)}
+.brand span span,.gold{color:var(--gold)}
 .nav-links{display:flex;gap:18px;align-items:center;font-size:14px}
 .nav-links a{text-decoration:none;color:#cfcabd}
 @media(max-width:640px){.hide-s{display:none}}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;font:600 15px 'Space Grotesk';text-decoration:none;border:0;cursor:pointer}
-.btn-red{background:linear-gradient(180deg,#ff9a94,#ff5f57 60%,#d93a33);color:#1a0302!important}
+.btn-red{background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#e0a800);color:#000!important}
 .btn-ghost{border:1px solid var(--line);color:var(--ink)!important;background:transparent}
 .btn-ghost:hover{border-color:var(--red)}
 .eyebrow,.kicker{font:600 13px 'Space Grotesk';letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin:0 0 14px}
@@ -42,7 +42,25 @@ h1 em{font-style:normal;color:transparent;-webkit-text-stroke:2px var(--red)}
 h2{font:700 clamp(32px,4.6vw,56px)/1.02 'Space Grotesk';letter-spacing:-.03em;margin:0 0 18px}
 .lede{font-size:clamp(18px,2.1vw,22px);color:#d8d3c5;max-width:620px;margin:0 0 28px}
 section{padding:88px 0;border-bottom:1px solid var(--line)}
-.hero{padding:40px 0 70px;position:relative;overflow:hidden}
+.hero{padding:40px 0 70px;position:relative;overflow:hidden;background:#000}
+.hero-slides{position:absolute;inset:0;z-index:0;pointer-events:none}
+.hero-slides div{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;animation:slide 18s infinite}
+.hero-slides div:nth-child(1){background-image:url(/thumbs/hero-bg.jpg);animation-delay:0s}
+.hero-slides div:nth-child(2){background-image:url(/thumbs/hero-2.jpg);animation-delay:6s}
+.hero-slides div:nth-child(3){background-image:url(/thumbs/hero-3.jpg);animation-delay:12s}
+@keyframes slide{0%{opacity:0}4%{opacity:1}30%{opacity:1}36%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.hero-slides div{animation:none}.hero-slides div:first-child{opacity:1}}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.72) 45%,rgba(0,0,0,.35) 100%),linear-gradient(0deg,#000 0%,rgba(0,0,0,0) 35%);pointer-events:none}
+.hero .wrap,.hero .strip{position:relative;z-index:1}
+.hero-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:40px;align-items:center}
+@media(max-width:760px){.hero-row{grid-template-columns:1fr}.hero-icon{display:none}}
+.hero-icon{width:250px;height:250px;position:relative;filter:drop-shadow(0 0 40px rgba(255,95,87,.35))}
+.hero-icon .reel-spin{transform-origin:50% 50%;animation:spin 14s linear infinite}
+.hero-icon .stamp-spin{transform-origin:50% 50%;animation:spin 22s linear infinite reverse}
+.hero-icon .play{transform-origin:50% 50%;animation:pulse 2.4s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@media(prefers-reduced-motion:reduce){.hero-icon *{animation:none!important}}
 .hero::before{content:"";position:absolute;right:-220px;top:-200px;width:760px;height:760px;background:radial-gradient(circle,rgba(255,95,87,.13),transparent 60%);pointer-events:none}
 .hero .wrap{position:relative}
 .ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
@@ -83,18 +101,52 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 </style>
 </head>
 <body>
+<!-- Part of bWalletX strip (shared snippet, same on every bWalletX product site; source: bwalletx-site/brand/part-of-bwalletx.html) -->
+<style>
+.bwx-strip{background:#0a0a0b;border-bottom:1px solid rgba(255,210,77,.16);font:500 13px/1 'IBM Plex Sans',system-ui,-apple-system,sans-serif}
+.bwx-strip a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 16px;color:#cfcabd;text-decoration:none;letter-spacing:.01em}
+.bwx-strip svg{width:12px;height:16px;flex:none;display:block}
+.bwx-strip b{color:#ffd24d;font-weight:600}
+.bwx-strip .bwx-go{color:#7c7a73;transition:transform .16s cubic-bezier(.2,.8,.2,1),color .16s}
+.bwx-strip a:hover{color:#f4f1e8}
+.bwx-strip a:hover .bwx-go{color:#ffd24d;transform:translateX(2px)}
+.bwx-strip a:focus-visible{outline:2px solid #ffd24d;outline-offset:-4px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){.bwx-strip .bwx-go{transition:none}}
+</style>
+<aside class="bwx-strip" aria-label="bWalletX"><a href="https://bwalletx.com"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><defs><linearGradient id="bwx-g" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="0" y2="105"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#FFD24D"/><stop offset="1" stop-color="#C98F00"/></linearGradient><mask id="bwx-m"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask></defs><g fill="url(#bwx-g)" mask="url(#bwx-m)"><polygon points="45,12 45,76 27,76 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>Part of <b>bWalletX</b></span><span class="bwx-go" aria-hidden="true">&rarr;</span></a></aside>
+<!-- /Part of bWalletX strip -->
 <header class="wrap nav">
-  <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" width="28" height="28" alt=""><span>bVideo<span>X</span></span></a>
+  <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" width="28" height="28" alt=""><span>bVideo<span class="gold">X</span></span></a>
   <nav class="nav-links" aria-label="Main"><a class="hide-s" href="#how">How it works</a><a class="hide-s" href="#cost">Cost</a><a class="hide-s" href="https://bmintx.com/flick-off">FLICK OFF</a><span data-bwx></span></nav>
 </header>
 
 <main>
 <section class="hero">
+  <div class="hero-slides" aria-hidden="true"><div></div><div></div><div></div></div>
   <div class="wrap">
-    <p class="eyebrow">YouTube → bVideoX · part of FLICK OFF</p>
-    <h1>Your channel.<br><em>Owned</em> by you.</h1>
-    <p class="lede">You made every one of those videos. Bring them to Bitcoin with their original upload dates, signed by you and kept in your own wallet. No strikes, no takedowns, no one switching off your income.</p>
-    <div class="ctas"><span data-bwx></span><a class="btn btn-ghost" href="#how">How to bring your channel</a></div>
+    <div class="hero-row">
+    <div>
+      <p class="eyebrow">YouTube → bVideoX · part of FLICK OFF</p>
+      <h1>Your channel.<br><em>Owned</em> by you.</h1>
+      <p class="lede">You made every one of those videos. Bring them to Bitcoin with their original upload dates, signed by you and kept in your own wallet. No strikes, no takedowns, no one switching off your income.</p>
+      <div class="ctas"><span data-bwx></span><a class="btn btn-ghost" href="#how">How to bring your channel</a></div>
+    </div>
+    <div class="hero-icon" aria-hidden="true">
+      <svg viewBox="0 0 200 200" width="100%" height="100%">
+        <defs><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe58a"/><stop offset="1" stop-color="#e0a800"/></linearGradient></defs>
+        <g class="reel-spin">
+          <circle cx="100" cy="100" r="88" fill="#111" stroke="#ff5f57" stroke-width="4"/>
+          <circle cx="100" cy="100" r="62" fill="none" stroke="#2a2a2a" stroke-width="14" stroke-dasharray="6 10"/>
+          <g fill="#000"><circle cx="100" cy="46" r="12"/><circle cx="150" cy="82" r="12"/><circle cx="150" cy="118" r="12"/><circle cx="100" cy="154" r="12"/><circle cx="50" cy="118" r="12"/><circle cx="50" cy="82" r="12"/></g>
+        </g>
+        <g class="stamp-spin">
+          <path id="arc" d="M100,100 m-80,0 a80,80 0 1,1 160,0 a80,80 0 1,1 -160,0" fill="none"/>
+          <text font-family="Space Grotesk,sans-serif" font-size="13" font-weight="700" letter-spacing="3" fill="#ffd24d"><textPath href="#arc">ON BITCOIN · YOURS · ON BITCOIN · YOURS ·</textPath></text>
+        </g>
+        <polygon class="play" points="88,72 88,128 134,100" fill="url(#gd)"/>
+      </svg>
+    </div>
+    </div>
   </div>
   <div class="strip" aria-hidden="true"><div class="reel" id="reel"></div></div>
 </section>
@@ -147,7 +199,7 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 </section>
 </main>
 
-<footer class="wrap">bVideoX · part of the bWalletX family · <a href="https://bmintx.com/flick-off">FLICK OFF</a> · <a href="https://bwalletx.com/get">Get bWalletX</a></footer>
+<footer class="wrap">bVideoX · part of the bWalletX family · <a href="https://bmintx.com/flick-off">FLICK OFF</a> · <a href="https://bwalletx.com/get">Get bWalletX</a> · <a href="/thumbs/CREDITS.json">Image credits</a></footer>
 
 <script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
@@ -155,9 +207,8 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 <script>
 (() => {
   const V = [['My first vlog','2009','4:12'],['Studio tour','2012','11:40'],['How I edit','2015','18:05'],['Live set, London','2016','1:02:33'],['Behind the scenes','2018','9:58'],['Q&A','2019','24:10'],['Making the album','2021','32:47'],['Tour diary #3','2022','14:21'],['10 years of the channel','2023','21:09'],['The new studio','2024','7:44']];
-  const hues = [8, 28, 200, 260, 330, 160, 45, 290, 190, 350];
   const reel = document.getElementById('reel');
-  const card = ([t, y, d], i) => `<div class="vid"><div class="th" style="background:linear-gradient(135deg,hsl(${hues[i]} 60% 32%),hsl(${(hues[i] + 40) % 360} 55% 14%))"><span class="dur">${d}</span><span class="seal">ON BITCOIN</span></div><div class="meta"><b>${t}</b><span>uploaded ${y}</span></div></div>`;
+  const card = ([t, y, d], i) => `<div class="vid"><div class="th" style="background:#111 url(/thumbs/thumb-${String(i % V.length).padStart(2, '0')}.jpg) center/cover"><span class="dur">${d}</span><span class="seal">ON BITCOIN</span></div><div class="meta"><b>${t}</b><span>uploaded ${y}</span></div></div>`;
   reel.innerHTML = [...V, ...V].map(card).join('');
   const vids = [...reel.children];
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
