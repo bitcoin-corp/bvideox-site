@@ -85,7 +85,7 @@
       $('s2Txt').textContent = `✓ Verified: you own ${ownName()} on YouTube` + (verified?.email ? ` (${verified.email})` : '') + '.';
     }
     $('bindBtn').hidden = !(on && verified && key && !mine);
-    $('bindBtn').disabled = !saving; if (!saving) $('bindBtn').textContent = 'Bind (saving opens shortly)';
+    $('bindBtn').disabled = !saving; $('bindBtn').textContent = saving ? 'Bind channel to my wallet' : 'Bind (saving opens shortly)';
     $('boundTxt').hidden = !mine; if (mine) $('boundTxt').textContent = 'Claimed by you ✓ Linked to your bWalletX.';
   };
   const load = () => fetch('/api/claim/bind').then((r) => r.json()).then((b) => {
