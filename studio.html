@@ -76,6 +76,21 @@ main{padding-bottom:40px}
 .center .steps3{text-align:left}
 .testbar{margin:18px 0 0;padding:12px 16px;border-radius:14px;background:var(--gold);color:#000;font-weight:600}.testbar a{color:#000}
 details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';margin-top:10px}
+
+.modal{border:1px solid rgba(255,210,77,.35);border-radius:22px;background:#0b0b0c;color:var(--ink);padding:0;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:hidden}
+.modal::backdrop{background:rgba(0,0,0,.8)}
+.modal[open]{display:flex;flex-direction:column}
+.modal .mb{padding:22px 20px 16px;display:flex;flex-direction:column;min-height:0;overflow:auto}
+#videos .mb{overflow:hidden;height:calc(100dvh - 32px);max-height:820px}
+#videos .scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin:6px -4px 0;padding:0 4px}
+#videos .tools{position:static;background:none;border-top:1px solid var(--line);padding:12px 0 0;margin-top:10px}
+.modal h2{font-size:22px;padding-right:36px}
+.modal .x{position:absolute;right:12px;top:10px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#000;color:var(--ink);font-size:22px;cursor:pointer;z-index:2}
+.modal .x:hover{border-color:var(--gold)}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.steps3 a{cursor:pointer}
+.me{padding:18px 0 4px}
+.panel{margin-top:14px}
 </style>
 </head>
 <body>
@@ -123,39 +138,43 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
     </div>
 
     <ol class="steps3" id="owner3" hidden aria-label="Your three steps">
-      <li id="st1" class="done"><a href="#account"><span class="n">1</span><div><b>Wallet connected</b><span class="s" id="st1s"></span></div></a></li>
-      <li id="st2"><a href="#youtube"><span class="n">2</span><div><b>Link YouTube</b><span class="s" id="st2s">Not linked yet</span></div></a></li>
-      <li id="st3"><a href="#videos"><span class="n">3</span><div><b>Mint videos</b><span class="s" id="st3s">After linking</span></div></a></li>
+      <li id="st1" class="done"><a href="#account" data-open="account"><span class="n">1</span><div><b>Wallet connected</b><span class="s" id="st1s"></span></div></a></li>
+      <li id="st2"><a href="#youtube" data-open="youtube"><span class="n">2</span><div><b>Link YouTube</b><span class="s" id="st2s">Not linked yet</span></div></a></li>
+      <li id="st3"><a href="#videos" data-open="videos"><span class="n">3</span><div><b>Mint videos</b><span class="s" id="st3s">After linking</span></div></a></li>
     </ol>
 
+    <div class="row2" id="ownerLinks" hidden><button class="chip" type="button" data-open="account">Username &amp; domain</button><button class="chip" type="button" data-open="status">What works today</button></div>
+    <div class="row2" id="pubLinks" hidden><button class="chip" type="button" data-open="status">What works today</button></div>
+
     <!-- YouTube -->
-    <section class="panel" id="youtube" aria-labelledby="ytH">
+    <dialog class="modal" id="youtube" aria-labelledby="ytH"><button class="x" type="button" data-close aria-label="Close">×</button><div class="mb">
       <h2 id="ytH">YouTube <span class="badge" id="ytBadge"></span></h2>
       <div id="ytBody"></div>
-      <div class="help" id="ytHelp" hidden></div>
       <p class="msg" id="ytMsg" aria-live="polite"></p>
-    </section>
+      <div class="help" id="ytHelp" hidden></div>
+    </div></dialog>
 
     <!-- Videos -->
-    <section class="panel" id="videos" aria-labelledby="vH">
+    <dialog class="modal" id="videos" aria-labelledby="vH"><button class="x" type="button" data-close aria-label="Close">×</button><div class="mb">
       <h2 id="vH">Your videos <span class="badge live" id="vBadge">Live</span></h2>
       <p id="vLede">Link YouTube to see every video you’ve posted here.</p>
+      <div class="scroll"><div class="grid" id="grid"></div></div>
       <div class="tools" id="tools" hidden>
         <button class="btn btn-ghost" type="button" id="selAll">Select all</button>
         <button class="btn btn-gold" type="button" id="mintSel" disabled>Mint selected</button>
         <span class="q" id="quote" aria-live="polite"></span>
+        <p class="msg" id="mintMsg" aria-live="polite" style="flex:1 1 100%;margin:0"></p>
       </div>
-      <p class="msg" id="mintMsg" aria-live="polite"></p>
-      <div class="grid" id="grid"></div>
-      <ul class="caveats" id="caveats" hidden style="color:var(--mute);font-size:13px;padding-left:18px;margin:16px 0 0">
+
+      <details id="caveats" hidden><summary>What minting does</summary><ul style="color:var(--mute);font-size:13px;padding-left:18px;margin:8px 0 0">
         <li>Each record keeps the title, description, date and link, locked with your wallet’s keys. Only you can open it. You can make any one public later.</li>
         <li>1p per video plus a small network fee, shown before you mint. Your wallet asks before anything is paid.</li>
         <li>Your videos stay on YouTube. We never download or copy them.</li>
-      </ul>
-    </section>
+      </ul></details>
+    </div></dialog>
 
     <!-- Account -->
-    <section class="panel" id="account" aria-labelledby="aH" hidden>
+    <dialog class="modal" id="account" aria-labelledby="aH" hidden><button class="x" type="button" data-close aria-label="Close">×</button><div class="mb">
       <h2 id="aH">Your studio link <span class="badge" id="uBadge"></span></h2>
       <p>Your studio starts with your bWalletX name. Pick another username if you like. Your wallet signs the change, so only you can make it.</p>
       <form class="field" id="uForm" novalidate>
@@ -183,7 +202,7 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
         <li><span>Point your DNS (you do this)</span><span class="badge live">Live</span></li>
         <li><span>We connect it to your studio</span><span class="badge coming">Coming</span></li>
       </ul>
-    </section>
+    </div></dialog>
 
     <!-- Public view: channels -->
     <section class="panel" id="pub" hidden>
@@ -191,10 +210,10 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
       <div id="pubList"></div>
     </section>
 
-    <section class="panel" id="status" aria-labelledby="sH">
+    <dialog class="modal" id="status" aria-labelledby="sH"><button class="x" type="button" data-close aria-label="Close">×</button><div class="mb">
       <h2 id="sH">What works today</h2>
       <ul class="check" id="checklist"></ul>
-    </section>
+    </div></dialog>
   </section>
 </main>
 <footer>bVideoX · part of the bWalletX family · <a href="https://bwalletx.com/get">Get bWalletX</a></footer>

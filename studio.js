@@ -39,14 +39,15 @@ async function load() {
   $('studio').hidden = false;
   head();
   if (P.isOwner) {
-    $('owner3').hidden = false; $('account').hidden = false;
+    $('owner3').hidden = false; $('ownerLinks').hidden = false;
     if (claimOn) verified = await fetch('/api/claim/bind', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((b) => b?.verified || null).catch(() => null);
     youtube(); account(); await loadVideos();
   } else {
-    $('youtube').hidden = true; $('videos').hidden = true; publicView();
+    $('pubLinks').hidden = false; publicView();
   }
   checklist();
-  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
+  const want = location.hash.slice(1) || (qs.get('yt') || qs.get('linked') ? 'youtube' : '');
+  if (P.isOwner && want) openModal(want);
 }
 
 function head() {
@@ -139,9 +140,8 @@ async function bind() {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { if (j.code === 'reverify') verified = null; throw new Error(j.error || 'The link was not saved.'); }
     yt = { platform: 'youtube', channelId: verified.channelId, slug: verified.slug, claimedAt: j.claimedAt };
-    history.replaceState(null, '', location.pathname + '#videos');
-    youtube(); await loadVideos(); checklist();
-    say($('ytMsg'), 'Linked ✓', 'ok');
+    history.replaceState(null, '', location.pathname);
+    youtube(); checklist(); openModal('videos'); await loadVideos();
   } catch (e) {
     say($('ytMsg'), /denied|declin|reject|cancel/i.test(String(e?.message)) ? 'Your wallet said no, so nothing was linked.' : e?.code === 'NOT_FOUND' ? 'Your wallet isn’t connected in this browser. Press Connect bWalletX at the top, then try again.' : (e?.message || 'That didn’t work. Try again.'), 'bad');
     if (verified) { btn.disabled = false; btn.classList.remove('busy'); btn.textContent = 'Link it to my wallet'; } else youtube();
@@ -287,5 +287,22 @@ document.addEventListener('bvideox-wallet', (e) => {
   else if (P?.isOwner && k !== st.identityKey) location.assign(uname ? location.pathname : '/studio');
   else if (P && !P.isOwner && k === st.identityKey) location.reload();
 });
+
+// ── modals: every step opens over the studio; one at a time ───────────────────
+const MODALS = ['youtube', 'videos', 'account', 'status'];
+function openModal(id) {
+  if (!MODALS.includes(id)) return;
+  if (id === 'videos' && !yt) id = 'youtube';
+  if (!P?.isOwner && id !== 'status') return;
+  MODALS.forEach((m) => { const d = $(m); if (d.open && m !== id) d.close(); });
+  const d = $(id); if (!d.open) d.showModal();
+}
+document.addEventListener('click', (e) => {
+  const o = e.target.closest('[data-open]');
+  if (o) { e.preventDefault(); openModal(o.dataset.open); return; }
+  if (e.target.closest('[data-close]')) e.target.closest('dialog').close();
+  else if (e.target.tagName === 'DIALOG') e.target.close(); // backdrop click
+});
+MODALS.forEach((m) => $(m).addEventListener('close', () => { if (location.hash) history.replaceState(null, '', location.pathname + location.search); }));
 
 load();
