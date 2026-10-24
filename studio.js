@@ -50,6 +50,19 @@ async function load() {
   if (P.isOwner && want) openModal(want);
 }
 
+/** Avatar: first image that loads (paymail bAvatar, then the YouTube channel picture); gold initial if none. */
+function setAvatar(urls, name) {
+  const av = $('av'); av.setAttribute('aria-label', name || '');
+  const tried = (av._tried ||= []); const list = urls.filter((u) => u && !tried.includes(u));
+  if (!av.style.backgroundImage) { av.textContent = (name || 'b').trim().charAt(0).toUpperCase(); av.classList.add('init'); }
+  for (const u of list) {
+    tried.push(u);
+    const i = new Image();
+    i.onload = () => { if (av._ok) return; av._ok = u; av.style.backgroundImage = `url("${u}")`; av.textContent = ''; av.classList.remove('init'); };
+    i.src = u;
+  }
+}
+
 function head() {
   const name = st.displayName || (st.alias ? st.alias : 'bWalletX studio');
   document.title = `${P.isOwner ? 'Your studio' : name} · bVideoX`;
@@ -57,7 +70,7 @@ function head() {
   $('name').textContent = name;
   $('handle').textContent = st.alias ? '$' + st.alias : 'No $name yet';
   $('mail').textContent = st.paymail || 'Pick a name in bWalletX (Settings › Identity) and it shows here.';
-  if (st.avatar) { $('av').style.backgroundImage = `url("${st.avatar}")`; $('av').setAttribute('aria-label', name); }
+  setAvatar([st.avatar], name);
   if (st.username) { $('linkRow').hidden = false; $('pubLink').textContent = 'bvideox.com/u/' + st.username; }
   $('copyLink').onclick = async () => { try { await navigator.clipboard.writeText('https://bvideox.com/u/' + st.username); $('copyLink').textContent = 'Copied'; } catch { $('copyLink').textContent = 'Copy failed'; } setTimeout(() => { $('copyLink').textContent = 'Copy link'; }, 1600); };
   $('st1s').textContent = st.alias ? '$' + st.alias : 'Connected';
@@ -161,6 +174,7 @@ async function loadVideos(fresh) {
   cfg = c;
   if (!j?.channel) { $('grid').innerHTML = ''; $('vLede').textContent = 'YouTube didn’t answer just now. Press Refresh videos in a minute.'; return; }
   channel = j.channel; videos = j.videos || [];
+  setAvatar([channel.avatar], st.displayName || st.alias);
   if (!videos.length) { $('grid').innerHTML = ''; $('tools').hidden = true; $('vLede').textContent = 'No public videos found on this channel yet.'; help('no-videos'); return; }
   const total = j.channel.total;
   $('vLede').textContent = `${S.videosN(videos.length)}${total && total > videos.length ? ` of ${total} shown (YouTube only lists public ones)` : ''}. Mint one at a time, or pick several and mint them together.`;
