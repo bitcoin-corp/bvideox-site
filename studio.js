@@ -1,5 +1,5 @@
 // bVideoX studio: /studio (the signed-in wallet's own) and /u/<username> (anyone's; owner tools when it's yours).
-// The page names the wallet by its paymail ($name, name@bwalletx.com). It never shows the identity key.
+// The page names the wallet by its full paymail (name@bwalletx.com); with no name yet, a short key + "Get your name".
 import * as S from '/mint/studio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -68,12 +68,15 @@ function head() {
   document.title = `${P.isOwner ? 'Your studio' : name} · bVideoX`;
   $('kick').textContent = P.isOwner ? 'Your studio' : 'Studio';
   $('name').textContent = name;
-  $('handle').textContent = st.alias ? '$' + st.alias : 'No $name yet';
-  $('mail').textContent = st.paymail || 'Pick a name in bWalletX (Settings › Identity) and it shows here.';
+  // Full paymail is the primary label; the $handle is secondary. No name: short key + "Get your name".
+  const sk = st.identityKey ? st.identityKey.slice(0, 6) + '\u2026' + st.identityKey.slice(-4) : '';
+  $('handle').textContent = st.paymail || sk || 'No name yet';
+  if (st.paymail) $('mail').textContent = st.alias ? '$' + st.alias : '';
+  else $('mail').innerHTML = '<a href="https://bwalletx.com/get" target="_blank" rel="noopener">Get your name</a>';
   setAvatar([st.avatar], name);
   if (st.username) { $('linkRow').hidden = false; $('pubLink').textContent = 'bvideox.com/u/' + st.username; }
   $('copyLink').onclick = async () => { try { await navigator.clipboard.writeText('https://bvideox.com/u/' + st.username); $('copyLink').textContent = 'Copied'; } catch { $('copyLink').textContent = 'Copy failed'; } setTimeout(() => { $('copyLink').textContent = 'Copy link'; }, 1600); };
-  $('st1s').textContent = st.alias ? '$' + st.alias : 'Connected';
+  $('st1s').textContent = st.paymail || sk || 'Connected';
 }
 
 // ── YouTube ───────────────────────────────────────────────────────────────────
