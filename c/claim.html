@@ -71,7 +71,7 @@
     'no-channel': "Signed in, but that Google account has no YouTube channel. Sign in with the account that owns the channel.",
     'not-owner': "Signed in, but that Google account doesn't own this channel. Sign in with the Google account that owns it.",
   };
-  let channel = null, on = false, verified = null, key = null, claim = null;
+  let saving = false, channel = null, on = false, verified = null, key = null, claim = null;
   const showErr = (t) => { $('err').textContent = t; $('err').hidden = !t; };
   const ownName = () => channel ? (channel.handle || channel.name) : 'this channel';
   if (qs.get('error')) showErr(ERR[qs.get('error')] || 'Something went wrong. Try again.');
@@ -85,10 +85,11 @@
       $('s2Txt').textContent = `✓ Verified: you own ${ownName()} on YouTube` + (verified?.email ? ` (${verified.email})` : '') + '.';
     }
     $('bindBtn').hidden = !(on && verified && key && !mine);
+    $('bindBtn').disabled = !saving; if (!saving) $('bindBtn').textContent = 'Bind (saving opens shortly)';
     $('boundTxt').hidden = !mine; if (mine) $('boundTxt').textContent = 'Claimed by you ✓ Linked to your bWalletX.';
   };
   const load = () => fetch('/api/claim/bind').then((r) => r.json()).then((b) => {
-    verified = b.verified?.slug === channel.slug ? b.verified : null; key = b.identityKey || key; claim = b.claim || claim;
+    verified = b.verified?.slug === channel.slug ? b.verified : null; key = b.identityKey || key; claim = b.claim || claim; saving = 'claim' in b;
     if (verified) { history.replaceState(null, '', location.pathname); showErr(''); }
     paint();
   }).catch(paint);
