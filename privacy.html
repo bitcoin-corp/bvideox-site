@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · bVideoX</title>
+<meta name="description" content="What bVideoX reads, what it keeps, and how to delete it. In plain English.">
+<link rel="canonical" href="https://bvideox.com/privacy">
+<meta property="og:type" content="website"><meta property="og:url" content="https://bvideox.com/privacy"><meta property="og:site_name" content="bVideoX">
+<meta property="og:title" content="Privacy · bVideoX"><meta property="og:description" content="What bVideoX reads, what it keeps, and how to delete it. In plain English.">
+<meta property="og:image" content="https://bvideox.com/og-bvideox-v1.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://bvideox.com/og-bvideox-v1.png">
+<meta name="theme-color" content="#000000"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/c/site.css">
+<style>.doc{max-width:720px;padding:40px 16px 20px}.doc h2{margin-top:34px;font-size:24px}.doc p,.doc li{color:#cfcabd}.doc ul{padding-left:20px}.doc a{color:var(--gold)}</style>
+</head>
+<body>
+<header class="wrap nav"><a class="brand" href="/"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a><nav class="nav-links"><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></header>
+<main class="wrap doc">
+  <p class="kicker">Privacy</p>
+  <h1>Privacy, in plain English.</h1>
+  <p class="mute">Last updated 24 October 2026.</p>
+  <p>bVideoX (bvideox.com) is run by THE BITCOIN CORPORATION LTD, a company registered in England and Wales, company number 16735102 ("we"). This page says what we read, what we keep and how to remove it.</p>
+
+  <h2>What we read</h2>
+  <ul>
+    <li><b>Public channel information</b> from YouTube, through the YouTube Data API: your channel's name, handle, picture, description and the list of your public videos (titles, descriptions, dates and links).</li>
+    <li><b>When you prove a channel is yours with a code</b>, we read your channel's public description to find the code. No Google sign-in is needed.</li>
+    <li><b>Only if you choose "Sign in with Google"</b>: we ask Google for the read-only YouTube permission (youtube.readonly) and use it once, to see which channels your Google account owns. We then revoke the access straight away. We don't keep the Google token, we don't read your private videos, and we never change anything on your channel.</li>
+  </ul>
+
+  <h2>What we keep</h2>
+  <ul>
+    <li><b>Your claim</b>: that a YouTube channel id belongs to a bWalletX identity key (a public key, not your name), with the time it was checked and your wallet's signature.</li>
+    <li><b>Your studio name</b>: the username you pick and, if you add one, your own domain.</li>
+    <li>If you signed in with Google, a one-way fingerprint (hash) of your Google account id, never your email address or password.</li>
+  </ul>
+  <p>Short-lived cookies keep your wallet connected and hold a channel check for up to 30 minutes. We don't use advertising or tracking cookies.</p>
+
+  <h2>What we never do</h2>
+  <ul>
+    <li>We never download, copy or re-host your videos. They play from YouTube with YouTube's own player.</li>
+    <li>We never sell your data or share it with advertisers.</li>
+  </ul>
+
+  <h2>Your records on Bitcoin</h2>
+  <p>If you choose to mint, each video's record (title, description, date, link and a fingerprint) is written to the Bitcoin SV blockchain. Records are private by default: they are encrypted with your own wallet keys, so only your wallet can open them. You can make any one public later. Anything written to a blockchain is permanent and can't be deleted by us or anyone else, so only mint what you want to keep.</p>
+
+  <h2>Who else is involved</h2>
+  <ul>
+    <li><b>Google / YouTube</b>, for channel data (<a href="https://policies.google.com/privacy">Google Privacy Policy</a>). bVideoX uses YouTube API Services; see the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.</li>
+    <li><b>bWalletX</b>, our own wallet, which holds your keys on your device and stores your claim on its server.</li>
+    <li><b>Vercel</b>, which hosts this website.</li>
+  </ul>
+
+  <h2>How to delete</h2>
+  <ul>
+    <li>If you signed in with Google, you can remove bVideoX's access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+    <li>To remove your claim, studio name or domain, email <a href="mailto:support@bwalletx.com">support@bwalletx.com</a> from your account's contact address or ask in Ask b inside bWalletX. We delete it within 30 days.</li>
+    <li>If you used a code, you can delete it from your channel description as soon as the check passes.</li>
+  </ul>
+
+  <h2>Your rights</h2>
+  <p>Under UK data protection law you can ask to see, correct or delete the personal data we hold about you, and complain to the Information Commissioner's Office (ico.org.uk). Contact us first at <a href="mailto:support@bwalletx.com">support@bwalletx.com</a>.</p>
+</main>
+<footer>bVideoX · part of the bWalletX family · <a href="https://bwalletx.com/get">Get bWalletX</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></footer>
+</body>
+</html>

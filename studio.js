@@ -12,7 +12,7 @@ const DOMAIN_RE = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const badge = (el, live, text) => { el.className = 'badge ' + (live ? 'live' : 'coming'); el.textContent = text || (live ? 'Live' : 'Coming'); };
 const say = (el, text, kind = '') => { el.textContent = text || ''; el.className = 'msg' + (kind ? ' ' + kind : ''); };
 
-let P = null, st = null, claimOn = false, verified = null, yt = null, channel = null, videos = [], cfg = null, busy = false;
+let P = null, st = null, claimOn = false, googleOn = false, verified = null, yt = null, channel = null, videos = [], cfg = null, busy = false;
 const picked = new Set();
 const key = () => P?.isOwner ? st.identityKey : null;
 const done = () => (channel && key() ? S.doneFor(channel.channelId, key()) : {});
@@ -25,7 +25,7 @@ async function load() {
     fetch(uname ? '/api/studio/profile?name=' + encodeURIComponent(uname) : '/api/studio/profile?me=1', { cache: 'no-store' }).then(async (r) => ({ ok: r.ok, status: r.status, j: await r.json().catch(() => ({})) })).catch(() => ({ ok: false, status: 0, j: {} })),
     fetch('/api/claim/status').then((r) => r.json()).catch(() => ({})),
   ]);
-  claimOn = !!c.youtube;
+  claimOn = !!c.youtube; googleOn = !!c.google;
   $('loading').hidden = true;
   if (uname && p.status === 404) { $('nf').hidden = false; $('nfTitle').textContent = `No studio called ${uname} yet.`; return; }
   if (!p.ok || !p.j.studio) {
@@ -126,7 +126,7 @@ function youtube() {
   }
   if (verified && verified.channelId) {
     badge($('ytBadge'), true, 'Almost there');
-    body.innerHTML = `<p>✓ Google confirmed you own <b>${esc(verified.name || (verified.slug ? '@' + verified.slug : 'the channel'))}</b>${verified.email ? ` (${esc(verified.email)})` : ''}. Sign with your wallet to link it to your studio. It costs nothing.</p><button class="btn btn-gold" type="button" id="bindBtn">Link it to my wallet</button>`;
+    body.innerHTML = `<p>✓ ${verified.method === 'code' ? 'YouTube shows' : 'Google confirmed'} you own <b>${esc(verified.name || (verified.slug ? '@' + verified.slug : 'the channel'))}</b>${verified.email ? ` (${esc(verified.email)})` : ''}. Sign with your wallet to link it to your studio. It costs nothing.</p><button class="btn btn-gold" type="button" id="bindBtn">Link it to my wallet</button>`;
     $('bindBtn').onclick = bind;
     if (qs.get('many')) say($('ytMsg'), `That Google account has ${qs.get('many')} channels. We picked the first. To link another, sign in again and choose that channel’s account.`);
     help(qs.get('hint') || null);
@@ -134,10 +134,10 @@ function youtube() {
   }
   const on = claimOn && !TEST;
   badge($('ytBadge'), on, on ? 'Live' : 'Coming');
-  body.innerHTML = `<p>Sign in with the Google account that owns your channel. We read it once, read-only, then let go of the access.</p>`
-    + (on ? `<a class="btn btn-gold" id="ytGo" href="/api/claim/youtube/start?studio=1">Link YouTube</a>`
+  body.innerHTML = `<p>Paste a short code in your channel description and press Check. No Google sign-in. We only read your public channel page.</p>`
+    + (on ? `<a class="btn btn-gold" id="ytGo" href="#">Link YouTube</a>`
       : `<a class="btn btn-gold" aria-disabled="true" href="#" id="ytGo">${TEST ? 'Works on bvideox.com' : 'Coming soon'}</a>`);
-  $('ytGo').addEventListener('click', (e) => { if ($('ytGo').getAttribute('aria-disabled')) e.preventDefault(); else { $('ytGo').classList.add('busy'); $('ytGo').textContent = 'Opening Google…'; } });
+  $('ytGo').addEventListener('click', (e) => { e.preventDefault(); if (!$('ytGo').getAttribute('aria-disabled')) window.bvxClaimCode.open({ google: googleOn ? '/api/claim/youtube/start?studio=1' : null, onVerified: (v) => { verified = v; youtube(); } }); });
   const err = qs.get('yt');
   if (err) help(err);
 }
@@ -286,7 +286,7 @@ function checklist() {
     [`Your studio link (bvideox.com/u/${st.username || 'name'})`, !!st.username],
     ['Choose your own username', !!st.settingsLive],
     ['Use your own domain', false],
-    ['Link YouTube with Google', ytLive],
+    ['Link YouTube with a code (no Google sign-in)', ytLive],
     ['See every public video on your channel', true],
     ['Mint one video, a few, or all of them', true],
     ['Mint the whole channel in one go', false],

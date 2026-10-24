@@ -18,11 +18,13 @@ export default async function handler(req, res) {
   const identityKey = s?.sub || null;
   if (req.method !== 'POST') {
     const claim = ok ? await claimState('youtube', ok.channelId) : null;
-    return res.status(200).json({ verified: ok && { slug: ok.slug, channelId: ok.channelId, name: ok.name || null, studio: !!ok.studio, email: ok.email || null, verifiedAt: ok.verifiedAt }, identityKey, claim });
+    return res.status(200).json({ verified: ok && { method: ok.method || 'google', slug: ok.slug, channelId: ok.channelId, name: ok.name || null, studio: !!ok.studio, email: ok.email || null, verifiedAt: ok.verifiedAt }, identityKey, claim });
   }
   if (!ok) return res.status(401).json({ error: 'Prove the channel is yours first (Google step)', code: 'reverify' });
   if (!identityKey) return res.status(401).json({ error: 'Connect bWalletX first' });
-  if (Date.now() - ok.verifiedAt > TEN_MIN || !ok.subHash) return res.status(401).json({ error: 'Your Google check is more than 10 minutes old. Sign in with Google again, then bind.', code: 'reverify' });
+  // A code proof is tied to the wallet that asked for the code; another wallet in this browser can't use it.
+  if (ok.method === 'code' && ok.identityKey !== identityKey) return res.status(401).json({ error: 'That check was made for a different wallet. Check the code again with this wallet.', code: 'reverify' });
+  if (Date.now() - ok.verifiedAt > TEN_MIN || !ok.subHash) return res.status(401).json({ error: ok.method === 'code' ? 'Your channel check is more than 10 minutes old. Press Check again, then bind.' : 'Your Google check is more than 10 minutes old. Sign in with Google again, then bind.', code: 'reverify' });
   const key = claimsSecret();
   if (!key) return res.status(503).json({ error: 'Saving claims is not switched on yet.' });
   const b = await body(req);
@@ -30,7 +32,7 @@ export default async function handler(req, res) {
   const token = sealClaim(key, {
     site: 'bvideox.com', platform: 'youtube', channelId: ok.channelId, slug: ok.slug,
     heldPaymail: c?.channelId === ok.channelId ? c.heldPaymail || null : null,
-    identityKey, subHash: ok.subHash, verifiedAt: ok.verifiedAt,
+    identityKey, subHash: ok.subHash, verifiedAt: ok.verifiedAt, method: ok.method || 'google',
   });
   let r, j;
   try {

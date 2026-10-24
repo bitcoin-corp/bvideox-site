@@ -1,7 +1,7 @@
 // GET /api/claim/youtube/callback?code&state -> exchange code, list the signed-in user's channels (mine=true),
 // and accept only if one of them is the channel being claimed. The Google token is used once and dropped.
 import { createHash } from 'node:crypto';
-import { enabled, REDIRECT, cookie, read, seal, open, secret, maskEmail } from '../_claim.js';
+import { googleEnabled as enabled, REDIRECT, cookie, read, seal, open, secret, maskEmail } from '../_claim.js';
 
 const idClaims = (t) => { try { return JSON.parse(Buffer.from(String(t).split('.')[1], 'base64url').toString('utf8')); } catch { return {}; } };
 

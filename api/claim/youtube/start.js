@@ -1,7 +1,7 @@
 // GET /api/claim/youtube/start?slug=bsvdata&id=UC… -> redirect to Google consent (read-only YouTube scope)
 // GET /api/claim/youtube/start?studio=1          -> same, from the studio: link whichever channel the account owns
 import { randomBytes } from 'node:crypto';
-import { enabled, REDIRECT, SCOPE, cookie, seal, secret } from '../_claim.js';
+import { googleEnabled as enabled, REDIRECT, SCOPE, cookie, seal, secret } from '../_claim.js';
 
 export default function handler(req, res) {
   if (!enabled()) return res.status(503).json({ error: 'Claiming is coming soon', coming: true });
