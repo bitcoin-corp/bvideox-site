@@ -13,10 +13,14 @@ const ls = {
   get: (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } },
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+const videosN = (n) => `${n} video${n === 1 ? '' : 's'}`;
+const txN = (n) => `${n} transaction${n === 1 ? '' : 's'}`;
 const money = (sats, cfg) => {
   if (!cfg.usdPerBsv) return `${sats.toLocaleString()} sats`;
   const usd = (sats / 1e8) * cfg.usdPerBsv, gbp = cfg.usdPerGbp ? usd / cfg.usdPerGbp : null;
-  return gbp != null ? (gbp < 1 ? `${(gbp * 100).toFixed(gbp * 100 < 10 ? 1 : 0)}p` : `£${gbp.toFixed(2)}`) : `$${usd.toFixed(3)}`;
+  if (gbp == null) return usd < 0.001 ? 'under $0.001' : `$${usd.toFixed(3)}`;
+  const p = gbp * 100;
+  return p < 0.1 ? 'under 0.1p' : p < 10 ? `${p.toFixed(1).replace(/\.0$/, '')}p` : p < 100 ? `${Math.round(p)}p` : `£${gbp.toFixed(2)}`;
 };
 
 let ch = null, videos = [], key = null, cfg = null, pinned = null, walletKey = null, busy = false;
@@ -58,12 +62,12 @@ async function paint() {
   const sel = selection(), block = liveBlock();
   const liveN = Math.min(sel.length, Math.max(0, LIVE_LIMIT - Object.keys(d).length));
   if (cfg && sel.length) {
-    const p = await R.plan(ch, sel, cfg), one = p.premiumSatsPerItem;
-    $('mintQuote').textContent = `${sel.length} video${sel.length === 1 ? '' : 's'}: 1p per video + network fee = about ${money(p.totalSats, cfg)} (${p.txs} transaction${p.txs === 1 ? '' : 's'}, fee ${money(p.feeSats, cfg)}, premium ${one.toLocaleString()} sats each).`;
+    const p = await R.plan(ch, sel, cfg);
+    $('mintQuote').textContent = `${videosN(sel.length)} selected: 1p per video + network fee (${money(p.feeSats, cfg)}) = about ${money(p.totalSats, cfg)}, in ${txN(p.txs)}.`;
   } else $('mintQuote').textContent = sel.length ? 'Pricing…' : 'Pick the videos to mint.';
   $('dryBtn').disabled = busy || !sel.length;
   $('liveBtn').disabled = busy || !!block || !liveN;
-  $('liveBtn').textContent = liveN ? `Mint ${liveN} video${liveN === 1 ? '' : 's'}${LIVE_LIMIT < Infinity ? ' (test run)' : ''}` : 'Mint';
+  $('liveBtn').textContent = liveN ? `Mint ${videosN(liveN)}${LIVE_LIMIT < Infinity ? ' (test run)' : ''}` : 'Mint';
   $('mintGate').textContent = block || (LIVE_LIMIT < Infinity ? `Test run: real minting is capped at ${LIVE_LIMIT} videos for now.` : '');
   $('mintBadge').className = 'badge ' + (block ? 'coming' : 'live'); $('mintBadge').textContent = block ? 'Dry run' : 'Live';
 }
@@ -96,13 +100,13 @@ async function run(dryRun) {
         n += es.length;
         if (dryRun) dry.push(...es);
         else { const d = done(); for (const e of es) d[e.videoId] = { outpoint: e.outpoint, kid: e.kid }; ls.set(doneKey(), d); }
-        msg.textContent = `${dryRun ? 'Dry run: ' : ''}${n} of ${sel.length} encrypted${dryRun ? ' on this device. Nothing sent.' : ' and written.'}`;
+        msg.textContent = `${dryRun ? 'Dry run: ' : ''}${n} of ${videosN(sel.length)} encrypted${dryRun ? ' on this device. Nothing sent.' : ' and written.'}`;
       },
     });
     if (dryRun) ls.set(dryKey(), dry.map((e) => ({ outpoint: e.outpoint, kid: e.kid, script: e.script })));
     msg.textContent = dryRun
-      ? `Dry run done: ${n} videos encrypted by your wallet into ${p.txs} transaction${p.txs === 1 ? '' : 's'}, about ${money(p.totalSats, cfg)}. Nothing was sent or spent. Open them below.`
-      : `Done: ${n} video records written, locked with your keys. Open them below.`;
+      ? `Dry run done: ${videosN(n)} encrypted by your wallet into ${txN(p.txs)}, about ${money(p.totalSats, cfg)}. Nothing was sent or spent. Open them below.`
+      : `Done: ${videosN(n)} written, locked with your keys. Open them below.`;
     picked.clear();
     await readBack(w);
   } catch (e) {

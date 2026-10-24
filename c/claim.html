@@ -37,6 +37,7 @@
 .caveats{color:var(--mute);font-size:13px;padding-left:18px;margin:10px 0}
 .rec{display:flex;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding:10px 0;font-size:14px;flex-wrap:wrap}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.testbar{max-width:760px;margin:18px 0 0;padding:12px 16px;border-radius:14px;background:var(--gold);color:#000;font-weight:600}.testbar a{color:#000}
 .setup{max-width:760px;border:1px dashed rgba(255,210,77,.35);border-radius:16px;padding:14px 18px;color:#cfcabd;font-size:14px}
 </style>
 </head>
@@ -46,7 +47,8 @@
   <nav class="nav-links" aria-label="Main"><a id="backLink" href="/">Back to channel</a></nav>
 </header>
 <main class="wrap">
-  <div class="top"><div class="av" id="av"></div><div><p class="kicker">Claim your channel <span class="badge coming" id="claimBadge">Coming</span></p><h1 id="name">Claim your channel</h1></div></div>
+  <p class="testbar" id="testbar" hidden>Test copy — claiming and minting run on <a href="https://bvideox.com">bvideox.com</a>.</p>
+  <div class="top"><div class="av" id="av"></div><div><p class="kicker">Claim your channel <span class="badge coming" id="claimBadge" hidden>Coming</span></p><h1 id="name">Claim your channel</h1></div></div>
   <p class="mute" style="max-width:760px">We never mint for you. Prove the channel is yours, link it to your bWalletX, and then choose what to mint. Your videos stay on YouTube either way.</p>
   <p class="err" id="err" hidden></p>
   <ol class="steps">
@@ -85,6 +87,8 @@
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
+  const TEST = !/^(www\.)?bvideox\.com$/.test(location.hostname);
+  if (TEST) { $('testbar').hidden = false; $('setup').hidden = true; $('claimBadge').hidden = true; }
   const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
   const qs = new URLSearchParams(location.search);
   $('backLink').href = '/c/' + encodeURIComponent(slug);
@@ -138,8 +142,10 @@
       if (channel.heldPaymail) $('mailTxt').textContent = ' and the held paymail ' + channel.heldPaymail;
       if (ERR[qs.get('error')]) showErr(ERR[qs.get('error')].replace('this channel', ownName()));
     }
+    if (TEST && !on) $('googleBtn').hidden = true;
+    if (!on && !TEST) $('claimBadge').hidden = false;
     if (on && channel) {
-      $('claimBadge').className = 'badge live'; $('claimBadge').textContent = 'Live'; $('setup').hidden = true;
+      $('claimBadge').className = 'badge live'; $('claimBadge').textContent = 'Live'; $('claimBadge').hidden = false; $('setup').hidden = true;
       const g = $('googleBtn'); g.textContent = 'Sign in with Google'; g.removeAttribute('aria-disabled');
       g.href = `/api/claim/youtube/start?slug=${encodeURIComponent(channel.slug)}&id=${encodeURIComponent(channel.channelId)}`;
       load();
