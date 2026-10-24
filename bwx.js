@@ -18,7 +18,9 @@
   .bwx-link{word-break:break-all;font-size:11px;color:#9a968b;background:#000;border-radius:8px;padding:8px;margin-top:8px;cursor:copy}`;
   document.head.appendChild(css);
 
-  let key = null;
+  let key = null, wallet = null;
+  /** The connected BRC-100 wallet (for signing claims): this session's, or a restored extension/pairing. */
+  window.bvxWallet = async () => wallet || (wallet = (await C.connectBwalletX({})).wallet);
   const draw = () => slots.forEach((s) => {
     s.innerHTML = '';
     const b = document.createElement('button');
@@ -63,7 +65,7 @@
         },
       });
       const v = await post('/api/bwalletx/verify', { identityKey: r.identityKey, nonce: r.nonce, signature: r.signature, ticket });
-      key = v.identityKey; close(); draw();
+      key = v.identityKey; wallet = r.wallet; close(); draw();
       document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: key } }));
     } catch (e) {
       if (e && e.code === 'NOT_FOUND') {
@@ -78,7 +80,7 @@
   async function disconnect() {
     await post('/api/bwalletx/session', {}).catch(() => {});
     try { C.clearPairing?.(); } catch {}
-    key = null; draw();
+    key = null; wallet = null; draw();
   }
   fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => { key = j.identityKey || null; draw(); }).catch(draw);
   draw();

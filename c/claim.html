@@ -28,7 +28,8 @@
 .step.done::before{content:"✓";background:var(--gold);color:#000}
 .step h3{font:700 18px 'Space Grotesk';margin:0 0 6px}
 .step p{margin:0 0 10px;color:#cfcabd;font-size:15px}
-.err{color:var(--red);font-size:14px}
+.err{color:var(--red);font-size:15px;max-width:760px;border:1px solid rgba(255,120,100,.35);border-radius:14px;padding:12px 16px}
+.ok{color:var(--gold);font-weight:600;margin:10px 0 0}
 .setup{max-width:760px;border:1px dashed rgba(255,210,77,.35);border-radius:16px;padding:14px 18px;color:#cfcabd;font-size:14px}
 </style>
 </head>
@@ -42,10 +43,11 @@
   <p class="mute" style="max-width:760px">We never mint for you. Prove the channel is yours, link it to your bWalletX, and then choose what to mint. Your videos stay on YouTube either way.</p>
   <p class="err" id="err" hidden></p>
   <ol class="steps">
-    <li class="step" id="s1"><h3>Sign in with Google</h3><p>Use the Google account that owns the YouTube channel.</p></li>
-    <li class="step" id="s2"><h3>Let us check the channel is yours</h3><p>Grant read-only YouTube access. We ask YouTube which channels you own and compare the channel id. We can't upload, edit or delete anything, and we drop the access straight after the check.</p><a class="btn btn-gold" id="googleBtn" href="#" aria-disabled="true">Coming soon</a></li>
-    <li class="step" id="s3"><h3>Connect bWalletX</h3><p>Binds the channel<span id="mailTxt"></span> to your bWalletX identity key, so only you can mint and get paid.</p><span data-bwx></span> <button class="btn btn-ghost" id="bindBtn" type="button" hidden>Bind channel to my wallet</button></li>
-    <li class="step" id="s4"><h3>Mint your videos <span class="badge coming">Coming</span></h3><p>Mint each video's record (title, date, link, description, fingerprint) for pennies, in your own name. Adding the full video file comes later, from your own upload or Google Takeout.</p></li>
+    <li class="step done" id="sFind"><h3>Find</h3><p>✓ Found your channel<span id="findTxt"></span>.</p></li>
+    <li class="step done" id="sShow"><h3>Show</h3><p>✓ Your catalogue and mint price are on <a id="showLink" href="/">the channel page</a>.</p></li>
+    <li class="step" id="s1"><h3>Prove</h3><p id="s1Txt">Sign in with the Google account that owns the channel. We check it read-only with YouTube and drop the access straight after.</p><p id="s2Txt" class="ok" hidden></p><a class="btn btn-gold" id="googleBtn" href="#" aria-disabled="true">Coming soon</a></li>
+    <li class="step" id="s3"><h3>Bind</h3><p>Connect bWalletX and sign, so the channel<span id="mailTxt"></span> is linked to your identity key.</p><span data-bwx></span> <button class="btn btn-ghost" id="bindBtn" type="button" hidden>Bind channel to my wallet</button><p class="ok" id="boundTxt" hidden></p></li>
+    <li class="step" id="s4"><h3>Mint <span class="badge coming">Coming</span></h3><p>Mint each video's record in your own name, for pennies.</p></li>
   </ol>
   <div class="setup" id="setup">Claiming opens once Google sign-in is set up for bVideoX. You can still watch the channel page now.</div>
 </main>
@@ -59,13 +61,38 @@
   const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
   const qs = new URLSearchParams(location.search);
   $('backLink').href = '/c/' + encodeURIComponent(slug);
-  const ERR = { state: 'That sign-in expired. Try again.', denied: 'Google access was not granted.', token: 'Google sign-in failed. Try again.', 'not-owner': "That Google account doesn't own this channel. Sign in with the account that does." };
-  if (qs.get('error')) { $('err').textContent = ERR[qs.get('error')] || 'Something went wrong.'; $('err').hidden = false; }
-  let channel = null, on = false, verified = null, key = null;
-  const paint = () => {
-    $('s1').classList.toggle('done', !!verified); $('s2').classList.toggle('done', !!verified); $('s3').classList.toggle('done', !!(verified && key));
-    $('bindBtn').hidden = !(on && verified && key);
+  const ERR = {
+    state: 'That sign-in took too long or was started in another tab. Press "Sign in with Google" again.',
+    denied: "Google didn't give us access. Either you pressed Cancel, or Google blocked the sign-in because bVideoX is still in testing and your account must be added as a test user. Ask us in Ask b to add you, then try again.",
+    google: 'Google refused the sign-in. Try again, or ask us in Ask b if it keeps happening.',
+    token: "Google sign-in didn't finish. Try again.",
+    scope: "Signed in, but YouTube access wasn't granted. Try again and tick the YouTube permission on Google's screen.",
+    youtube: "Signed in, but YouTube didn't answer. Try again in a minute.",
+    'no-channel': "Signed in, but that Google account has no YouTube channel. Sign in with the account that owns the channel.",
+    'not-owner': "Signed in, but that Google account doesn't own this channel. Sign in with the Google account that owns it.",
   };
+  let saving = false, channel = null, on = false, verified = null, key = null, claim = null;
+  const showErr = (t) => { $('err').textContent = t; $('err').hidden = !t; };
+  const ownName = () => channel ? (channel.handle || channel.name) : 'this channel';
+  if (qs.get('error')) showErr(ERR[qs.get('error')] || 'Something went wrong. Try again.');
+  const paint = () => {
+    const mine = !!(claim?.claimed && key && claim.identityKey === key);
+    const v = !!verified || mine;
+    $('s1').classList.toggle('done', v); $('s3').classList.toggle('done', mine);
+    $('googleBtn').hidden = v;
+    if (v) {
+      $('s1Txt').hidden = true; $('s2Txt').hidden = false;
+      $('s2Txt').textContent = `✓ Verified: you own ${ownName()} on YouTube` + (verified?.email ? ` (${verified.email})` : '') + '.';
+    }
+    $('bindBtn').hidden = !(on && verified && key && !mine);
+    $('bindBtn').disabled = !saving; if (!saving) $('bindBtn').textContent = 'Bind (saving opens shortly)';
+    $('boundTxt').hidden = !mine; if (mine) $('boundTxt').textContent = 'Claimed by you ✓ Linked to your bWalletX.';
+  };
+  const load = () => fetch('/api/claim/bind').then((r) => r.json()).then((b) => {
+    verified = b.verified?.slug === channel.slug ? b.verified : null; key = b.identityKey || key; claim = b.claim || claim; saving = 'claim' in b;
+    if (verified) { history.replaceState(null, '', location.pathname); showErr(''); }
+    paint();
+  }).catch(paint);
   Promise.all([
     fetch('/api/channel?slug=' + encodeURIComponent(slug)).then((r) => r.json()).catch(() => ({})),
     fetch('/api/claim/status').then((r) => r.json()).catch(() => ({})),
@@ -73,23 +100,39 @@
     channel = j.channel; on = !!st.youtube;
     if (channel) {
       $('name').textContent = 'Claim ' + channel.name;
+      $('findTxt').textContent = ': ' + (channel.handle || channel.name); $('showLink').href = '/c/' + encodeURIComponent(channel.slug);
       if (channel.avatar) $('av').style.backgroundImage = `url("${channel.avatar}")`;
       if (channel.heldPaymail) $('mailTxt').textContent = ' and the held paymail ' + channel.heldPaymail;
+      if (ERR[qs.get('error')]) showErr(ERR[qs.get('error')].replace('this channel', ownName()));
     }
     if (on && channel) {
       $('claimBadge').className = 'badge live'; $('claimBadge').textContent = 'Live'; $('setup').hidden = true;
       const g = $('googleBtn'); g.textContent = 'Sign in with Google'; g.removeAttribute('aria-disabled');
       g.href = `/api/claim/youtube/start?slug=${encodeURIComponent(channel.slug)}&id=${encodeURIComponent(channel.channelId)}`;
-      fetch('/api/claim/bind').then((r) => r.json()).then((b) => { verified = b.verified?.slug === channel.slug ? b.verified : null; key = b.identityKey; paint(); });
+      load();
     }
     paint();
   });
   document.addEventListener('bvideox-wallet', (e) => { key = e.detail.identityKey; paint(); });
   $('googleBtn').addEventListener('click', (e) => { if (e.currentTarget.getAttribute('aria-disabled')) e.preventDefault(); });
   $('bindBtn').addEventListener('click', async () => {
-    const r = await fetch('/api/claim/bind', { method: 'POST' }); const j = await r.json();
-    if (!r.ok) { $('err').textContent = j.error; $('err').hidden = false; return; }
-    $('bindBtn').textContent = 'Ready to bind: saving to your identity is coming'; $('bindBtn').disabled = true;
+    const btn = $('bindBtn'); showErr(''); btn.disabled = true; btn.textContent = 'Check your wallet…';
+    try {
+      const w = await window.bvxWallet();
+      const timestamp = Date.now();
+      const msg = `bvideox claim youtube ${verified.channelId} ${key} ${timestamp}`;
+      const { signature } = await w.createSignature({ protocolID: [2, 'bwalletx channel claim'], keyID: 'youtube ' + verified.channelId, counterparty: 'anyone', data: Array.from(new TextEncoder().encode(msg)) });
+      const r = await fetch('/api/claim/bind', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ timestamp, signature }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (j.code === 'reverify') { verified = null; }
+        throw new Error(j.error || 'The claim was not accepted.');
+      }
+      claim = { claimed: true, identityKey: j.identityKey, claimedAt: j.claimedAt };
+    } catch (e) {
+      showErr(e?.code === 'NOT_FOUND' ? 'Your wallet is not connected in this browser any more. Press Connect bWalletX, then bind.' : (e?.message || 'That did not work. Try again.'));
+    }
+    btn.disabled = false; btn.textContent = 'Bind channel to my wallet'; paint();
   });
 })();
 </script>

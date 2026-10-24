@@ -10,3 +10,6 @@ export const SCOPE = 'openid email https://www.googleapis.com/auth/youtube.reado
 export const cookie = (name, value, maxAge) => `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${ORIGIN.startsWith('https') ? '; Secure' : ''}`;
 export const read = (req, name) => (String(req.headers.cookie || '').split(/;\s*/).find((c) => c.startsWith(name + '=')) || '').slice(name.length + 1);
 export { seal, open, secret };
+
+/** r•••@gmail.com */
+export const maskEmail = (e) => { const m = /^([^@])[^@]*@(.+)$/.exec(String(e || '')); return m ? `${m[1]}•••@${m[2]}` : null; };

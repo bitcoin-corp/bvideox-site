@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const ok = proof && proof.exp > Date.now() ? proof : null;
   const s = await verifySession(readCookie(req.headers.cookie, 'bwx_session'), { secret: secret() });
   const identityKey = s?.sub || null;
-  if (req.method !== 'POST') return res.status(200).json({ verified: ok && { slug: ok.slug, channelId: ok.channelId }, identityKey });
+  if (req.method !== 'POST') return res.status(200).json({ verified: ok && { slug: ok.slug, channelId: ok.channelId, email: ok.email || null }, identityKey });
   if (!ok) return res.status(401).json({ error: 'Prove the channel is yours first (Google step)' });
   if (!identityKey) return res.status(401).json({ error: 'Connect bWalletX first' });
   const c = findChannel(ok.slug);
