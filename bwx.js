@@ -2,7 +2,9 @@
    @bwalletx/connect's global build and qrcode-generator. Extension / in-app wallets connect straight away;
    on a desktop with no extension it shows a QR to pair the phone app (or paste into web.bwalletx.com).
    Once connected the button shows the wallet's paymail name ($name), never the identity key.
-   <span data-bwx="studio"></span> turns into a "Your studio" link once connected. */
+   <span data-bwx="studio"></span> turns into a "Your studio" link once connected.
+   In the header, a connected slot is a "$handle" link to /studio, and connecting there opens /studio.
+   <span data-bwx="signout"></span> is a Sign out button while connected (nothing when signed out). */
 (() => {
   const C = window.bWalletXConnect;
   const slots = [...document.querySelectorAll('[data-bwx]')];
@@ -32,6 +34,20 @@
   const draw = () => slots.forEach((s) => {
     s.innerHTML = '';
     const label = alias ? '$' + esc(alias) : key ? 'bWalletX connected' : '';
+    const inNav = !!s.closest('header');
+    // Navbar, connected: "$handle" -> your account page (/studio). Sign out lives on the studio page.
+    if (key && inNav) {
+      const a = document.createElement('a');
+      a.className = 'bwx-btn on'; a.href = '/studio'; a.title = 'Your account: paymail, handle, videos';
+      a.innerHTML = `<span class="bwx-dot"></span>${alias ? label : 'Your account'}`;
+      s.appendChild(a); return;
+    }
+    if (s.dataset.bwx === 'signout') {
+      if (!key) return;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'bwx-btn'; b.textContent = 'Sign out'; b.title = 'Disconnect bWalletX from bVideoX on this browser';
+      b.onclick = disconnect; s.appendChild(b); return;
+    }
     if (key && s.dataset.bwx === 'studio') {
       const a = document.createElement('a');
       a.className = 'bwx-btn on'; a.href = '/studio';
@@ -43,7 +59,7 @@
     b.className = 'bwx-btn' + (key ? ' on' : '');
     b.innerHTML = key ? `<span class="bwx-dot"></span>${label}` : 'Connect bWalletX';
     b.title = key ? 'Connected. Click to disconnect.' : 'Connect your bWalletX';
-    b.onclick = key ? disconnect : connect;
+    b.onclick = key ? disconnect : () => connect(inNav || s.dataset.bwx === 'studio');
     s.appendChild(b);
   });
   const post = async (url, body) => {
@@ -64,7 +80,7 @@
     return modal.querySelector('.bwx-card');
   };
 
-  async function connect() {
+  async function connect(toStudio) {
     let ticket = null;
     try {
       const r = await C.signInWithBwalletX({
@@ -81,7 +97,9 @@
       });
       const v = await post('/api/bwalletx/verify', { identityKey: r.identityKey, nonce: r.nonce, signature: r.signature, ticket });
       wallet = r.wallet; close(); setKey(v.identityKey);
-      document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: key } }));
+      document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: key, fromNav: !!toStudio } }));
+      // Connecting from the navbar (any page) opens your account page. The claim page's own step-3 button stays put.
+      if (toStudio && !/^\/studio\/?$/.test(location.pathname)) location.assign('/studio');
     } catch (e) {
       if (e && e.code === 'NOT_FOUND') {
         show(`<h3>No bWalletX found</h3><p>Get the bWalletX extension or app, or use the web wallet.</p><p><a class="bwx-btn on" href="https://bwalletx.com/get">Get bWalletX</a></p>`);

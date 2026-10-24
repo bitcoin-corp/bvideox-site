@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/c/site.css">
 </head>
 <body>
-<header class="wrap nav"><a class="brand" href="/"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a><nav class="nav-links"><a href="/">Home</a></nav></header>
+<header class="wrap nav"><a class="brand" href="/"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a><nav class="nav-links" aria-label="Main"><a class="hide-s" href="/">Home</a><a href="/browse">Browse</a><span data-bwx></span></nav></header>
 <main class="wrap" style="padding:40px 16px 20px">
   <p class="kicker">Claim your channel <span class="badge live">Live</span></p>
   <h1 style="margin-bottom:16px">Find your channel.</h1>
@@ -23,6 +23,9 @@
   <div class="find-msg" data-find-msg></div>
 </main>
 <footer>bVideoX · part of the bWalletX family · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></footer>
+<script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/bwx.js"></script>
 <script src="/c/find.js"></script>
 <script src="/mine.js" defer></script>
 </body>

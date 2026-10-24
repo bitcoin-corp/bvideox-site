@@ -1,11 +1,11 @@
 // Shared mint rules for the claim page (mint/ui.js) and the studio (mint/studio.js).
-// Safety: LIVE + LIVE_LIMIT cap real writes (owner's first test = 3 videos). Real writes also need the wallet to pin
+// LIVE gates real writes; LIVE_LIMIT is no longer a cap (owner 24 Oct: users mint what they want). Real writes also need the wallet to pin
 // [2,'bvideox records'] to bvideox.com (getVersion().pinnedProtocols >= PIN_VERSION, or a "+pN" version suffix) and
 // the premium payee set on the server. Any check failing = the page refuses to write.
 import * as R from './records.js';
 
 export const LIVE = true;
-export const LIVE_LIMIT = 3;
+export const LIVE_LIMIT = Infinity; // no cap: users mint whatever they choose and pay for it
 
 export const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const ls = {
@@ -53,7 +53,6 @@ export function liveBlock({ cfg, key, walletKey, pinned, seen, doneCount }) {
   if (walletKey && walletKey !== key) return 'The wallet in this browser is a different identity from the one signed in. Reconnect bWalletX.';
   if (pinned === false) return `Your bWalletX needs an update that keeps these records locked to bvideox.com (the connected wallet reports: ${seen}). Reload your wallet, or use web.bwalletx.com, then reconnect.`;
   if (!cfg.payee) return 'Real minting opens shortly (payments are being set up). Dry run works now.';
-  if (doneCount >= LIVE_LIMIT) return `Test run done: ${LIVE_LIMIT} videos minted. The rest open after we check them.`;
   return null;
 }
 
