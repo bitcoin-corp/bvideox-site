@@ -23,7 +23,7 @@ const money = (sats, cfg) => {
   return p < 0.1 ? 'under 0.1p' : p < 10 ? `${p.toFixed(1).replace(/\.0$/, '')}p` : p < 100 ? `${Math.round(p)}p` : `£${gbp.toFixed(2)}`;
 };
 
-let ch = null, videos = [], key = null, cfg = null, pinned = null, walletKey = null, busy = false;
+let ch = null, videos = [], key = null, cfg = null, pinned = null, walletKey = null, busy = false, walletSeen = '';
 const picked = new Set();
 const doneKey = () => `bvx-mint-${ch.channelId}-${key}`;
 const dryKey = () => `bvx-dry-${ch.channelId}`;
@@ -35,7 +35,13 @@ async function loadCfg() {
   if (!c || !c.usdPerBsv || !c.usdPerGbp) return null;
   return { ...c, gbpPerItem: c.premiumGbpPerItem, satPerKb: c.feeSatPerKb };
 }
-async function pins(w) { try { const v = await w.getVersion({}); return Number(v && v.pinnedProtocols) >= R.PIN_VERSION; } catch { return false; } }
+async function pins(w) {
+  try {
+    const v = await w.getVersion({});
+    walletSeen = `${(v && v.version) || 'unknown version'}${v && v.pinnedProtocols ? `, lock v${v.pinnedProtocols}` : ', no lock'}`;
+    return Number(v && v.pinnedProtocols) >= R.PIN_VERSION;
+  } catch (e) { walletSeen = `no answer (${(e && e.message) || 'error'})`; return false; }
+}
 
 /** Why a real write is refused right now, or null. */
 function liveBlock() {
@@ -44,7 +50,7 @@ function liveBlock() {
   if (!cfg.claim) return "We couldn't check the claim just now. Try again in a minute.";
   if (!cfg.claim.claimed || cfg.claim.identityKey !== key) return 'Only the bWalletX this channel is claimed to can mint.';
   if (walletKey && walletKey !== key) return 'The wallet in this browser is a different identity from the one signed in. Reconnect bWalletX.';
-  if (pinned === false) return 'Your bWalletX needs an update that keeps these records locked to bvideox.com. Real minting opens once it has it.';
+  if (pinned === false) return `Your bWalletX needs an update that keeps these records locked to bvideox.com (the connected wallet reports: ${walletSeen}). Reload your wallet, or use web.bwalletx.com, then reconnect.`;
   if (!cfg.payee) return 'Real minting opens shortly (payments are being set up). Dry run works now.';
   if (Object.keys(done()).length >= LIVE_LIMIT) return `Test run done: ${LIVE_LIMIT} videos minted. The rest open after we check them.`;
   return null;
