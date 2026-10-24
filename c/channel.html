@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESC}}">
+<meta name="robots" content="{{ROBOTS}}">
+<link rel="canonical" href="{{CANON}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{CANON}}">
+<meta property="og:site_name" content="bVideoX">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESC}}">
+<meta property="og:image" content="{{OG}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{OG}}">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/c/site.css">
+<style>
+.claimbar{background:linear-gradient(90deg,rgba(255,210,77,.14),rgba(255,210,77,.04));border-bottom:1px solid var(--line)}
+.claimbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px;font-size:14px}
+.claimbar b{color:var(--gold)}
+.head{display:flex;gap:20px;align-items:center;padding:34px 0 18px;flex-wrap:wrap}
+.av{width:96px;height:96px;border-radius:50%;background:#111 center/cover;border:2px solid var(--gold);flex:none}
+.facts{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:14px}
+.facts span{border:1px solid var(--line);border-radius:999px;padding:3px 12px;color:#cfcabd}
+.note{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:var(--card);margin:8px 0 22px;color:#d8d3c5}
+.mintall{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid rgba(255,210,77,.3);border-radius:16px;padding:16px 18px;margin-bottom:26px}
+.mintall b{font:700 22px 'Space Grotesk'}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:26px}
+.tier{border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:var(--card)}
+.tier h3{font:700 18px 'Space Grotesk';margin:0 0 6px}
+.tier p{margin:0;font-size:14px;color:#cfcabd}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+@media(max-width:400px){.grid{grid-template-columns:1fr}}
+.vid{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.player{position:relative;aspect-ratio:16/9;background:#111 center/cover;cursor:pointer;border:0;padding:0;width:100%;display:block}
+.player::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.55),rgba(0,0,0,0) 55%)}
+.player .pl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:62px;height:44px;border-radius:12px;background:rgba(0,0,0,.75);display:grid;place-items:center;z-index:1}
+.player:hover .pl{background:#ff0033}
+.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vm{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.vm b{font:600 15px/1.35 'Space Grotesk'}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-top:auto}
+.chip{border:1px solid rgba(154,150,139,.35);border-radius:999px;padding:2px 10px;font-size:12px;color:#b9b5a9}
+.state{padding:40px 0;color:var(--mute)}
+</style>
+</head>
+<body>
+<header class="wrap nav">
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a>
+  <nav class="nav-links" aria-label="Main"><a class="hide-s" href="/#find">Find a channel</a><a href="https://bwalletx.com/get">Get bWalletX</a></nav>
+</header>
+<div class="claimbar" id="claimbar" hidden><div class="wrap"><span><b>Unclaimed</b> · reserved for <span id="cbName"></span><span id="cbMail"></span> · Is this your channel?</span><a class="btn btn-gold" id="claimBtn" href="#">Claim it</a></div></div>
+<main class="wrap">
+  <div class="head">
+    <div class="av" id="av" role="img" aria-label=""></div>
+    <div>
+      <p class="kicker">YouTube channel <span class="badge live">Live</span></p>
+      <h1 id="name">Loading…</h1>
+      <div class="facts" id="facts"></div>
+    </div>
+  </div>
+  <p class="note" id="belongs">These videos belong to the channel owner. Shown here with YouTube's player; views count on YouTube.</p>
+  <div class="mintall" id="mintall" hidden>
+    <div><span class="mute" style="font-size:14px">Mint all <span id="mCount"></span> records</span><br><b id="mAll"></b> <span class="mute" style="font-size:14px">· only the channel owner can mint</span></div>
+    <a class="btn btn-ghost" id="mintBtn" href="#" aria-disabled="true">Claim to mint</a>
+  </div>
+  <div class="tiers">
+    <div class="tier"><h3>Mint the record <span class="badge coming">Coming</span></h3><p>Title, date, link, description and a fingerprint of each video, signed by the owner. No export needed, priced in pennies. The default.</p></div>
+    <div class="tier"><h3>Add the full video <span class="badge coming">Coming</span></h3><p>The owner uploads their own file or a Google Takeout export, priced per video before anything is written. We never download from YouTube.</p></div>
+  </div>
+  <h2>Videos</h2>
+  <div class="grid" id="grid"></div>
+  <p class="state" id="state">Loading the channel…</p>
+</main>
+<footer>bVideoX · part of the bWalletX family · We don't host or download these videos. Each one plays from YouTube. · <a href="/">Home</a></footer>
+<script>
+(() => {
+  const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const usd = (n) => n == null ? '' : n < 0.01 ? '<$0.01' : '$' + (n < 1 ? n.toFixed(3).replace(/0$/, '') : n.toFixed(2));
+  const day = (v) => v.published ? (v.dateExact ? new Date(v.published).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : v.relative || 'about ' + new Date(v.published).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })) : '';
+  const $ = (id) => document.getElementById(id);
+  fetch('/api/channel?slug=' + encodeURIComponent(slug)).then((r) => r.json().then((j) => [r.ok, j])).then(([ok, j]) => {
+    if (!ok) { $('name').textContent = 'Channel not found'; $('state').textContent = j.error || 'No channel here.'; return; }
+    const c = j.channel, q = j.quote;
+    document.title = `${c.name} · claimable channel · bVideoX`;
+    $('name').textContent = c.name;
+    if (c.avatar) { $('av').style.backgroundImage = `url("${c.avatar}")`; $('av').setAttribute('aria-label', c.name); }
+    $('facts').innerHTML = [c.handle && `<a href="${esc(c.url)}" rel="noopener" target="_blank">${esc(c.handle)} on YouTube ↗</a>`, c.status === 'claimed' ? 'Claimed' : 'Unclaimed', c.heldPaymail && (c.payable ? esc(c.heldPaymail) : `${esc(c.heldPaymail)} · held, not payable until claimed`)].filter(Boolean).map((x) => `<span>${x}</span>`).join('');
+    $('belongs').textContent = `These videos belong to ${c.name}. Shown here with YouTube's player; views count on YouTube.`;
+    if (c.status !== 'claimed') {
+      $('cbName').textContent = c.name; $('cbMail').textContent = c.heldPaymail ? ` (${c.heldPaymail} held)` : '';
+      $('claimBtn').href = `/c/${encodeURIComponent(c.slug)}/claim?id=${encodeURIComponent(c.channelId)}`; $('claimbar').hidden = false;
+      $('mintBtn').href = $('claimBtn').href;
+    }
+    const total = c.total;
+    $('mCount').textContent = total && total > j.videos.length ? total : j.videos.length;
+    const n = total && total > j.videos.length ? total : j.videos.length;
+    $('mAll').textContent = '~' + usd(q.perItem.usd * n);
+    $('mintall').hidden = false;
+    $('grid').innerHTML = j.videos.map((v) => `<article class="vid">
+      <button class="player" type="button" data-id="${esc(v.id)}" style="background-image:url(https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg)" aria-label="Play ${esc(v.title)} (YouTube player)"><span class="pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span></button>
+      <div class="vm"><b>${esc(v.title)}</b><div class="row"><span>${esc(day(v))}</span><span class="chip" title="Pointer + metadata record at today's fee rate plus b's service premium. Only the channel owner can mint.">Mint price ~${usd(q.perItem.usd)}</span></div></div></article>`).join('');
+    const more = total && total > j.videos.length ? ` Showing the latest ${j.videos.length} of ${total}; the full back catalogue loads once the YouTube API key is set up.` : '';
+    $('state').textContent = (j.videos.length ? '' : 'No public videos found.') + more + (q.premiumIsPlaceholder ? ' Prices are estimates: chain fee + a placeholder b premium.' : '');
+    $('grid').addEventListener('click', (e) => {
+      const b = e.target.closest('.player'); if (!b || b.querySelector('iframe')) return;
+      b.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.id)}?autoplay=1&rel=0" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+    });
+  }).catch(() => { $('state').textContent = 'Could not load the channel. Try again shortly.'; });
+})();
+</script>
+</body>
+</html>

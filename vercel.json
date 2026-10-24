@@ -1,5 +1,31 @@
 {
   "cleanUrls": true,
+  "functions": {
+    "api/**/*.js": {
+      "includeFiles": "{c/*.html,data/channels.json}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/c/:slug/claim",
+      "destination": "/api/cpage?slug=:slug&page=claim"
+    },
+    {
+      "source": "/c/:slug",
+      "destination": "/api/cpage?slug=:slug"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/c/(channel|claim)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    }
+  ],
   "redirects": [
     {
       "source": "/flick-off",

@@ -1,0 +1,23 @@
+{
+  "mint": {
+    "feeSatPerKb": 100,
+    "bytesPerItem": 620,
+    "outputSats": 1,
+    "premiumUsdPerItem": 0.01,
+    "premiumIsPlaceholder": true,
+    "note": "Pointer + metadata mint: {title, url, published, sha256(metadata)} in one 1-sat output. premiumUsdPerItem is the b service premium placeholder [PREMIUM] until the owner sets it."
+  },
+  "channels": [
+    {
+      "slug": "bsvdata",
+      "platform": "youtube",
+      "channelId": "UC47-ijiv58nqh5BWAbeSMeg",
+      "handle": "@BSVData",
+      "displayName": "BSV Data",
+      "status": "unclaimed",
+      "heldPaymail": "BSVData@bwalletx.com",
+      "url": "https://www.youtube.com/@BSVData",
+      "og": "/og-c-bsvdata-v1.png"
+    }
+  ]
+}

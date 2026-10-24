@@ -1,0 +1,31 @@
+// /c/:slug and /c/:slug/claim -> the channel/claim HTML with per-channel title, OG and robots.
+// Registry (curated) channels are indexable; on-the-fly channels from the handle box are noindex until claimed or curated.
+import { readFileSync } from 'node:fs';
+import { findChannel } from './_channels.js';
+
+const T = {
+  channel: readFileSync(new URL('../c/channel.html', import.meta.url), 'utf8'),
+  claim: readFileSync(new URL('../c/claim.html', import.meta.url), 'utf8'),
+};
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+export default function handler(req, res) {
+  const slug = (s => /^UC[\w-]{22}$/.test(s) ? s : s.toLowerCase())(String(req.query?.slug || '')).replace(/[^\w.-]/g, '').slice(0, 40);
+  const page = req.query?.page === 'claim' ? 'claim' : 'channel';
+  const c = findChannel(slug);
+  const name = c?.displayName || (slug ? '@' + slug : 'Channel');
+  const curated = !!c && c.status !== 'hidden';
+  const title = page === 'claim' ? `Claim ${name} · bVideoX` : `${name} · ${c?.status === 'claimed' ? 'on' : 'unclaimed channel on'} bVideoX`;
+  const desc = page === 'claim'
+    ? `Is ${name} your YouTube channel? Prove it with Google, connect bWalletX, then mint your videos' records in your own name.`
+    : `${name}'s videos, played with YouTube's own player. ${c?.status === 'claimed' ? '' : 'Unclaimed and reserved for the owner, who can claim it and mint every video’s record.'}`;
+  const html = T[page]
+    .replaceAll('{{TITLE}}', esc(title)).replaceAll('{{DESC}}', esc(desc))
+    .replaceAll('{{ROBOTS}}', curated && page === 'channel' ? 'index,follow' : 'noindex,follow')
+    .replaceAll('{{CANON}}', `https://bvideox.com/c/${encodeURIComponent(slug)}${page === 'claim' ? '/claim' : ''}`)
+    .replaceAll('{{OG}}', `https://bvideox.com${c?.og || '/og-bvideox-v1.png'}?v=1`);
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (!curated) res.setHeader('X-Robots-Tag', 'noindex');
+  res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
+  res.status(200).send(html);
+}

@@ -151,6 +151,17 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   <div class="strip" aria-hidden="true"><div class="reel" id="reel"></div></div>
 </section>
 
+<section id="find" style="padding:56px 0">
+  <div class="wrap">
+    <p class="kicker">Is your channel here? <span style="font:600 11px 'Space Grotesk';letter-spacing:.12em;border-radius:999px;padding:3px 9px;background:rgba(70,200,120,.14);color:#6ee09a;vertical-align:middle">LIVE</span></p>
+    <h2>Enter your YouTube handle.</h2>
+    <p class="lede">See your channel on bVideoX, played with YouTube's own player, and the price to mint every video's record. Then claim it.</p>
+    <form class="find" data-find style="display:flex;gap:8px;flex-wrap:wrap;max-width:560px"><input name="h" placeholder="@YourHandle" autocomplete="off" aria-label="YouTube handle" required style="flex:1 1 220px;min-height:48px;border-radius:999px;border:1px solid rgba(255,210,77,.35);background:#0b0b0c;color:#f4f1e8;padding:0 18px;font:500 16px 'IBM Plex Sans'"><button class="btn btn-red">Find my channel</button></form>
+    <div data-find-msg style="font-size:14px;color:#9a968b;min-height:22px;margin-top:8px"></div>
+    <p style="font-size:14px;color:#9a968b">Example: <a href="/c/bsvdata">BSV Data</a>, unclaimed and reserved for its owner.</p>
+  </div>
+</section>
+
 <section id="me" aria-live="polite">
   <div class="wrap">
     <p class="kicker">You’re connected</p>
@@ -204,6 +215,7 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 <script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="/bwx.js"></script>
+<script src="/c/find.js"></script>
 <script>
 (() => {
   const V = [['My first vlog','2009','4:12'],['Studio tour','2012','11:40'],['How I edit','2015','18:05'],['Live set, London','2016','1:02:33'],['Behind the scenes','2018','9:58'],['Q&A','2019','24:10'],['Making the album','2021','32:47'],['Tour diary #3','2022','14:21'],['10 years of the channel','2023','21:09'],['The new studio','2024','7:44']];

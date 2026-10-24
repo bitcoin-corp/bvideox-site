@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESC}}">
+<meta name="robots" content="{{ROBOTS}}">
+<link rel="canonical" href="{{CANON}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{CANON}}">
+<meta property="og:site_name" content="bVideoX">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESC}}">
+<meta property="og:image" content="{{OG}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{OG}}">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/c/site.css">
+<style>
+.top{padding:34px 0 10px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.av{width:72px;height:72px;border-radius:50%;background:#111 center/cover;border:2px solid var(--gold);flex:none}
+.steps{list-style:none;padding:0;margin:24px 0;display:grid;gap:14px;max-width:760px;counter-reset:s}
+.step{border:1px solid var(--line);border-radius:18px;padding:18px 20px 18px 66px;background:var(--card);position:relative;counter-increment:s}
+.step::before{content:counter(s);position:absolute;left:18px;top:18px;width:32px;height:32px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:700 15px 'Space Grotesk'}
+.step.done::before{content:"✓";background:var(--gold);color:#000}
+.step h3{font:700 18px 'Space Grotesk';margin:0 0 6px}
+.step p{margin:0 0 10px;color:#cfcabd;font-size:15px}
+.err{color:var(--red);font-size:14px}
+.setup{max-width:760px;border:1px dashed rgba(255,210,77,.35);border-radius:16px;padding:14px 18px;color:#cfcabd;font-size:14px}
+</style>
+</head>
+<body>
+<header class="wrap nav">
+  <a class="brand" href="/"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a>
+  <nav class="nav-links" aria-label="Main"><a id="backLink" href="/">Back to channel</a></nav>
+</header>
+<main class="wrap">
+  <div class="top"><div class="av" id="av"></div><div><p class="kicker">Claim your channel <span class="badge coming" id="claimBadge">Coming</span></p><h1 id="name">Claim your channel</h1></div></div>
+  <p class="mute" style="max-width:760px">We never mint for you. Prove the channel is yours, link it to your bWalletX, and then choose what to mint. Your videos stay on YouTube either way.</p>
+  <p class="err" id="err" hidden></p>
+  <ol class="steps">
+    <li class="step" id="s1"><h3>Sign in with Google</h3><p>Use the Google account that owns the YouTube channel.</p></li>
+    <li class="step" id="s2"><h3>Let us check the channel is yours</h3><p>Grant read-only YouTube access. We ask YouTube which channels you own and compare the channel id. We can't upload, edit or delete anything, and we drop the access straight after the check.</p><a class="btn btn-gold" id="googleBtn" href="#" aria-disabled="true">Coming soon</a></li>
+    <li class="step" id="s3"><h3>Connect bWalletX</h3><p>Binds the channel<span id="mailTxt"></span> to your bWalletX identity key, so only you can mint and get paid.</p><span data-bwx></span> <button class="btn btn-ghost" id="bindBtn" type="button" hidden>Bind channel to my wallet</button></li>
+    <li class="step" id="s4"><h3>Mint your videos <span class="badge coming">Coming</span></h3><p>Mint each video's record (title, date, link, description, fingerprint) for pennies, in your own name. Adding the full video file comes later, from your own upload or Google Takeout.</p></li>
+  </ol>
+  <div class="setup" id="setup">Claiming opens once Google sign-in is set up for bVideoX. You can still watch the channel page now.</div>
+</main>
+<footer>bVideoX · part of the bWalletX family · <a href="https://bwalletx.com/get">Get bWalletX</a></footer>
+<script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/bwx.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const slug = decodeURIComponent(location.pathname.split('/')[2] || '');
+  const qs = new URLSearchParams(location.search);
+  $('backLink').href = '/c/' + encodeURIComponent(slug);
+  const ERR = { state: 'That sign-in expired. Try again.', denied: 'Google access was not granted.', token: 'Google sign-in failed. Try again.', 'not-owner': "That Google account doesn't own this channel. Sign in with the account that does." };
+  if (qs.get('error')) { $('err').textContent = ERR[qs.get('error')] || 'Something went wrong.'; $('err').hidden = false; }
+  let channel = null, on = false, verified = null, key = null;
+  const paint = () => {
+    $('s1').classList.toggle('done', !!verified); $('s2').classList.toggle('done', !!verified); $('s3').classList.toggle('done', !!(verified && key));
+    $('bindBtn').hidden = !(on && verified && key);
+  };
+  Promise.all([
+    fetch('/api/channel?slug=' + encodeURIComponent(slug)).then((r) => r.json()).catch(() => ({})),
+    fetch('/api/claim/status').then((r) => r.json()).catch(() => ({})),
+  ]).then(([j, st]) => {
+    channel = j.channel; on = !!st.youtube;
+    if (channel) {
+      $('name').textContent = 'Claim ' + channel.name;
+      if (channel.avatar) $('av').style.backgroundImage = `url("${channel.avatar}")`;
+      if (channel.heldPaymail) $('mailTxt').textContent = ' and the held paymail ' + channel.heldPaymail;
+    }
+    if (on && channel) {
+      $('claimBadge').className = 'badge live'; $('claimBadge').textContent = 'Live'; $('setup').hidden = true;
+      const g = $('googleBtn'); g.textContent = 'Sign in with Google'; g.removeAttribute('aria-disabled');
+      g.href = `/api/claim/youtube/start?slug=${encodeURIComponent(channel.slug)}&id=${encodeURIComponent(channel.channelId)}`;
+      fetch('/api/claim/bind').then((r) => r.json()).then((b) => { verified = b.verified?.slug === channel.slug ? b.verified : null; key = b.identityKey; paint(); });
+    }
+    paint();
+  });
+  document.addEventListener('bvideox-wallet', (e) => { key = e.detail.identityKey; paint(); });
+  $('googleBtn').addEventListener('click', (e) => { if (e.currentTarget.getAttribute('aria-disabled')) e.preventDefault(); });
+  $('bindBtn').addEventListener('click', async () => {
+    const r = await fetch('/api/claim/bind', { method: 'POST' }); const j = await r.json();
+    if (!r.ok) { $('err').textContent = j.error; $('err').hidden = false; return; }
+    $('bindBtn').textContent = 'Ready to bind: saving to your identity is coming'; $('bindBtn').disabled = true;
+  });
+})();
+</script>
+</body>
+</html>
