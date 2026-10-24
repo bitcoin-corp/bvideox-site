@@ -41,7 +41,7 @@ async function load() {
   if (P.isOwner) {
     $('owner3').hidden = false; $('ownerLinks').hidden = false;
     if (claimOn) verified = await fetch('/api/claim/bind', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((b) => b?.verified || null).catch(() => null);
-    youtube(); account(); await loadVideos();
+    youtube(); account(); $('videos').hidden = !yt; await loadVideos();
   } else {
     $('pubLinks').hidden = false; publicView();
   }
@@ -141,7 +141,7 @@ async function bind() {
     if (!r.ok) { if (j.code === 'reverify') verified = null; throw new Error(j.error || 'The link was not saved.'); }
     yt = { platform: 'youtube', channelId: verified.channelId, slug: verified.slug, claimedAt: j.claimedAt };
     history.replaceState(null, '', location.pathname);
-    youtube(); checklist(); openModal('videos'); await loadVideos();
+    youtube(); checklist(); $('ytMsg').textContent = ''; $('youtube').close(); $('videos').hidden = false; await loadVideos(); $('videos').scrollIntoView({ behavior: 'smooth' });
   } catch (e) {
     say($('ytMsg'), /denied|declin|reject|cancel/i.test(String(e?.message)) ? 'Your wallet said no, so nothing was linked.' : e?.code === 'NOT_FOUND' ? 'Your wallet isn’t connected in this browser. Press Connect bWalletX at the top, then try again.' : (e?.message || 'That didn’t work. Try again.'), 'bad');
     if (verified) { btn.disabled = false; btn.classList.remove('busy'); btn.textContent = 'Link it to my wallet'; } else youtube();
@@ -289,10 +289,10 @@ document.addEventListener('bvideox-wallet', (e) => {
 });
 
 // ── modals: every step opens over the studio; one at a time ───────────────────
-const MODALS = ['youtube', 'videos', 'account', 'status'];
+const MODALS = ['youtube', 'account', 'status'];
 function openModal(id) {
+  if (id === 'videos') { if (!yt) id = 'youtube'; else { $('videos').hidden = false; $('videos').scrollIntoView({ behavior: 'smooth' }); return; } }
   if (!MODALS.includes(id)) return;
-  if (id === 'videos' && !yt) id = 'youtube';
   if (!P?.isOwner && id !== 'status') return;
   MODALS.forEach((m) => { const d = $(m); if (d.open && m !== id) d.close(); });
   const d = $(id); if (!d.open) d.showModal();
