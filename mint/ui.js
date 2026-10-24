@@ -38,8 +38,11 @@ async function loadCfg() {
 async function pins(w) {
   try {
     const v = await w.getVersion({});
-    walletSeen = `${(v && v.version) || 'unknown version'}${v && v.pinnedProtocols ? `, lock v${v.pinnedProtocols}` : ', no lock'}`;
-    return Number(v && v.pinnedProtocols) >= R.PIN_VERSION;
+    // Pin level from the field, or from a `+pN` version suffix (bwallet #64: the connect binary wire carries only `version`).
+    const m = v && typeof v.version === 'string' ? v.version.match(/\+p(\d+)\b/) : null;
+    const lock = Math.max(Number(v && v.pinnedProtocols) || 0, m ? Number(m[1]) : 0);
+    walletSeen = `${(v && v.version) || 'unknown version'}${lock ? `, lock v${lock}` : ', no lock'}`;
+    return lock >= R.PIN_VERSION;
   } catch (e) { walletSeen = `no answer (${(e && e.message) || 'error'})`; return false; }
 }
 
