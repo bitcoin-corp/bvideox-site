@@ -3,61 +3,20 @@
 // [2,'bvideox records'] to bvideox.com (getVersion().pinnedProtocols >= PIN_VERSION) and the premium payee set on
 // the server. Any check failing = the page refuses to write. Dry run is always available and sends nothing.
 import * as R from './records.js';
-
-const LIVE = true;
-const LIVE_LIMIT = 3;
+import { LIVE, LIVE_LIMIT, esc, ls, videosN, txN, money, doneKey as dk, loadCfg as cfgFor, pinCheck, liveBlock as blockFor, friendly } from './core.js';
 
 const $ = (id) => document.getElementById(id);
-const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const ls = {
-  get: (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-};
-const videosN = (n) => `${n} video${n === 1 ? '' : 's'}`;
-const txN = (n) => `${n} transaction${n === 1 ? '' : 's'}`;
-const money = (sats, cfg) => {
-  if (!cfg.usdPerBsv) return `${sats.toLocaleString()} sats`;
-  const usd = (sats / 1e8) * cfg.usdPerBsv, gbp = cfg.usdPerGbp ? usd / cfg.usdPerGbp : null;
-  if (gbp == null) return usd < 0.001 ? 'under $0.001' : `$${usd.toFixed(3)}`;
-  const p = gbp * 100;
-  return p < 0.1 ? 'under 0.1p' : p < 10 ? `${p.toFixed(1).replace(/\.0$/, '')}p` : p < 100 ? `${Math.round(p)}p` : `£${gbp.toFixed(2)}`;
-};
 
 let ch = null, videos = [], key = null, cfg = null, pinned = null, walletKey = null, busy = false, walletSeen = '';
 const picked = new Set();
-const doneKey = () => `bvx-mint-${ch.channelId}-${key}`;
+const doneKey = () => dk(ch.channelId, key);
 const dryKey = () => `bvx-dry-${ch.channelId}`;
 const done = () => ls.get(doneKey()) || {};
 
-/** Fresh config + live rates. Null (no quote, no writes) when either rate is missing. */
-async function loadCfg() {
-  const c = await fetch('/api/mint/config?channel_id=' + encodeURIComponent(ch.channelId), { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
-  if (!c || !c.usdPerBsv || !c.usdPerGbp) return null;
-  return { ...c, gbpPerItem: c.premiumGbpPerItem, satPerKb: c.feeSatPerKb };
-}
-async function pins(w) {
-  try {
-    const v = await w.getVersion({});
-    // Pin level from the field, or from a `+pN` version suffix (bwallet #64: the connect binary wire carries only `version`).
-    const m = v && typeof v.version === 'string' ? v.version.match(/\+p(\d+)\b/) : null;
-    const lock = Math.max(Number(v && v.pinnedProtocols) || 0, m ? Number(m[1]) : 0);
-    walletSeen = `${(v && v.version) || 'unknown version'}${lock ? `, lock v${lock}` : ', no lock'}`;
-    return lock >= R.PIN_VERSION;
-  } catch (e) { walletSeen = `no answer (${(e && e.message) || 'error'})`; return false; }
-}
-
+const loadCfg = () => cfgFor(ch.channelId);
+async function pins(w) { const p = await pinCheck(w); walletSeen = p.seen; return p.ok; }
 /** Why a real write is refused right now, or null. */
-function liveBlock() {
-  if (!LIVE) return 'Real minting is off. Dry run only.';
-  if (!cfg) return 'Prices are still loading.';
-  if (!cfg.claim) return "We couldn't check the claim just now. Try again in a minute.";
-  if (!cfg.claim.claimed || cfg.claim.identityKey !== key) return 'Only the bWalletX this channel is claimed to can mint.';
-  if (walletKey && walletKey !== key) return 'The wallet in this browser is a different identity from the one signed in. Reconnect bWalletX.';
-  if (pinned === false) return `Your bWalletX needs an update that keeps these records locked to bvideox.com (the connected wallet reports: ${walletSeen}). Reload your wallet, or use web.bwalletx.com, then reconnect.`;
-  if (!cfg.payee) return 'Real minting opens shortly (payments are being set up). Dry run works now.';
-  if (Object.keys(done()).length >= LIVE_LIMIT) return `Test run done: ${LIVE_LIMIT} videos minted. The rest open after we check them.`;
-  return null;
-}
+const liveBlock = () => blockFor({ cfg, key, walletKey, pinned, seen: walletSeen, doneCount: Object.keys(done()).length });
 const selection = () => videos.filter((v) => picked.has(v.id) && !done()[v.id]);
 
 async function paint() {
@@ -119,9 +78,7 @@ async function run(dryRun) {
     picked.clear();
     await readBack(w);
   } catch (e) {
-    msg.textContent = /denied|declin|reject|cancel|permission/i.test(String(e?.message)) ? 'Your wallet said no, so nothing was written. Try again when you’re ready.'
-      : e?.code === 'NOT_FOUND' ? 'Your wallet is not connected in this browser any more. Press Connect bWalletX, then try again.'
-      : (e?.message || 'It stopped. Try again: it carries on from the last saved batch.');
+    msg.textContent = friendly(e);
   }
   busy = false; paint();
 }
@@ -147,22 +104,57 @@ async function readBack(w) {
       if (r) rows.push({ ...r, outpoint: e.outpoint, dry: true });
     }
   } catch {}
-  out.innerHTML = rows.length ? rows.map((r, i) => `<div class="rec"><div><b>${esc(r.record.title || r.record.videoId)}</b><br><span class="mute">${r.dry ? 'Dry run, on this device only' : 'On chain · ' + esc(r.outpoint.slice(0, 10)) + '…'} · private</span></div><button class="btn btn-ghost pubBtn" type="button" data-i="${i}">Make public</button></div>`).join('')
+  out.innerHTML = rows.length ? (rows.length > 1 ? `<div class="rec"><span class="mute">${rows.length} records</span><button class="btn pubAll" type="button">Make all public</button></div>` : '') + rows.map((r, i) => `<div class="rec"><div><b>${esc(r.record.title || r.record.videoId)}</b><br><span class="mute">${r.dry ? 'Dry run, on this device only' : 'On chain · ' + esc(r.outpoint.slice(0, 10)) + '…'} · <span class="vis" data-i="${i}">private</span></span></div><button class="btn btn-ghost pubBtn" type="button" data-i="${i}">Make public</button></div>`).join('')
     : '<p class="mute">No minted videos yet.</p>';
-  out.onclick = (e) => { const b = e.target.closest('.pubBtn'); if (b) makePublic(rows[Number(b.dataset.i)], b); };
+  out.onclick = (e) => {
+    const b = e.target.closest('.pubBtn'); if (b) return makePublic([rows[Number(b.dataset.i)]], [b], out);
+    const a = e.target.closest('.pubAll');
+    if (a) { const btns = [...out.querySelectorAll('.pubBtn')].filter((x) => !x.disabled); makePublic(btns.map((x) => rows[Number(x.dataset.i)]), btns, out, a); }
+  };
   paint();
 }
 
-async function makePublic(r, btn) {
-  if (!confirm(`Make "${r.record.title}" public? Its record (title, description, date, link) goes on chain in clear, signed by you. That can't be undone. Your other records stay private.`)) return;
-  btn.disabled = true;
+/** Styled in-page confirm (never a browser dialog). Resolves true on the primary button. */
+function ask(title, body, yes) {
+  return new Promise((done) => {
+    if (!document.getElementById('bvxAskCss')) {
+      const st = document.createElement('style'); st.id = 'bvxAskCss';
+      st.textContent = '.bvx-ask{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}.bvx-ask>div{max-width:420px;width:100%;background:#0d0d0f;border:1px solid rgba(212,175,55,.35);border-radius:16px;padding:22px;color:#f4f1e8;box-shadow:0 20px 60px rgba(0,0,0,.6)}.bvx-ask h3{margin:0 0 8px;color:#d4af37;font-size:18px}.bvx-ask p{margin:0 0 18px;line-height:1.5;color:#c9c4b5;font-size:14px}.bvx-ask .row{display:flex;gap:10px;justify-content:flex-end}.bvx-ask button{border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;border:1px solid rgba(212,175,55,.4);background:transparent;color:#f4f1e8}.bvx-ask button.go{background:#d4af37;color:#0b0b0b;border-color:#d4af37}';
+      document.head.appendChild(st);
+    }
+    const m = document.createElement('div'); m.className = 'bvx-ask'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+    m.innerHTML = `<div><h3>${esc(title)}</h3><p>${esc(body)}</p><div class="row"><button type="button" class="no">Cancel</button><button type="button" class="go">${esc(yes)}</button></div></div>`;
+    const close = (v) => { m.remove(); document.removeEventListener('keydown', key); done(v); };
+    const key = (e) => { if (e.key === 'Escape') close(false); };
+    m.onclick = (e) => { if (e.target === m || e.target.closest('.no')) close(false); else if (e.target.closest('.go')) close(true); };
+    document.addEventListener('keydown', key);
+    document.body.appendChild(m); m.querySelector('.go').focus();
+  });
+}
+
+/** Make one or more records public in ONE wallet prompt (one transaction). */
+async function makePublic(list, btns, out, allBtn) {
+  if (!list.length) return;
+  const one = list.length === 1;
+  const ok = await ask(one ? `Make "${list[0].record.title}" public?` : `Make all ${list.length} public?`,
+    `${one ? 'Its record' : 'Each record'} (title, description, date, link) goes on chain in clear, signed by you. That can't be undone.`,
+    one ? 'Make public' : `Make ${list.length} public`);
+  if (!ok) return;
+  const all = [...btns, allBtn].filter(Boolean);
+  all.forEach((b) => { b.disabled = true; });
   try {
     const w = await window.bvxWallet();
-    const script = await R.publicScript(w, r.record, r.kid, r.outpoint);
-    if (r.dry || !LIVE || !(await pins(w))) { btn.textContent = `Dry run: ${script.length / 2} bytes, not sent`; return; }
-    const t = await w.createAction({ description: 'bVideoX: make one video record public', outputs: [{ lockingScript: script, satoshis: 0, outputDescription: 'Public video record' }], labels: [R.LABEL, 'bvideox public'], options: { randomizeOutputs: false, spendingAuthorization: { protocolID: R.PROTOCOL } } });
-    btn.textContent = t?.txid ? 'Public ✓' : 'Not sent';
-  } catch (e) { btn.disabled = false; btn.textContent = /denied|declin|reject/i.test(String(e?.message)) ? 'Make public' : 'Try again'; }
+    const scripts = [];
+    for (const r of list) scripts.push(await R.publicScript(w, r.record, r.kid, r.outpoint));
+    if (list.some((r) => r.dry) || !LIVE || !(await pins(w))) { btns.forEach((b, i) => { b.textContent = `Dry run: ${scripts[i].length / 2} bytes, not sent`; }); return; }
+    const t = await w.createAction({ description: one ? 'bVideoX: make one video record public' : `bVideoX: make ${list.length} video records public`, outputs: scripts.map((lockingScript) => ({ lockingScript, satoshis: 0, outputDescription: 'Public video record' })), labels: [R.LABEL, 'bvideox public'], options: { randomizeOutputs: false, spendingAuthorization: { protocolID: R.PROTOCOL } } });
+    if (!t?.txid) throw new Error('Not sent');
+    btns.forEach((b) => { b.textContent = 'Public ✓'; const v = out.querySelector(`.vis[data-i="${b.dataset.i}"]`); if (v) v.textContent = 'public'; });
+    if (allBtn) allBtn.textContent = 'All public ✓';
+  } catch (e) {
+    all.forEach((b) => { b.disabled = false; });
+    if (!/denied|declin|reject/i.test(String(e?.message))) btns.forEach((b) => { b.textContent = 'Try again'; });
+  }
 }
 
 /** Called by the claim page once the channel, videos and session key are known. */

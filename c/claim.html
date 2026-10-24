@@ -39,6 +39,11 @@
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .testbar{max-width:760px;margin:18px 0 0;padding:12px 16px;border-radius:14px;background:var(--gold);color:#000;font-weight:600}.testbar a{color:#000}
 .setup{max-width:760px;border:1px dashed rgba(255,210,77,.35);border-radius:16px;padding:14px 18px;color:#cfcabd;font-size:14px}
+.mdlg{border:1px solid rgba(255,210,77,.35);border-radius:22px;background:#0b0b0c;color:var(--ink);padding:0;width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 32px)}
+.mdlg::backdrop{background:rgba(0,0,0,.8)}.mdlg[open]{display:flex;flex-direction:column}
+.mdb{padding:20px;display:flex;flex-direction:column;min-height:0;overflow:auto;max-height:calc(100dvh - 34px)}
+.mdlg .mlist{flex:1 1 auto;max-height:none;min-height:120px;overflow-y:auto;overscroll-behavior:contain}
+.mdlg .x{position:absolute;right:12px;top:10px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#000;color:var(--ink);font-size:22px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -60,21 +65,26 @@
       <p>Put each video's record on chain in your own name: title, description, date, link and a fingerprint. <b>Private by default</b>: locked with your bWalletX keys, so only your 12 words open it. Make any one public later, if you want. <b>1p per video + network fee.</b></p>
       <p class="mute" id="mintOff">Claim the channel to your bWalletX first. Only the owner can mint.</p>
       <div id="mintBox" hidden>
+        <button class="btn btn-gold" type="button" onclick="document.getElementById('mintDlg').showModal()">Choose videos to mint</button>
+        <a class="btn btn-ghost" href="/studio">Open my studio</a>
+        <dialog id="mintDlg" class="mdlg"><button class="x" type="button" onclick="this.closest('dialog').close()" aria-label="Close">×</button><div class="mdb">
+        <h3 style="margin:0 40px 8px 0">Mint your videos</h3>
         <div class="mrow"><button class="btn btn-ghost" id="mintAll" type="button">Select all</button><span class="mute" id="mintQuote"></span></div>
         <div class="mlist" id="mintList"></div>
         <div class="mrow"><button class="btn btn-ghost" id="dryBtn" type="button" disabled>Dry run (nothing sent)</button><button class="btn btn-gold" id="liveBtn" type="button" disabled>Mint</button></div>
         <p class="mute" id="mintGate"></p>
         <p class="ok" id="mintMsg" aria-live="polite"></p>
-        <ul class="caveats">
+        <details><summary class="mute" style="cursor:pointer">What minting does</summary><ul class="caveats">
           <li>Your wallet asks once to lock records with your keys, then once per batch of 25 to pay.</li>
           <li>Anyone can see that a record exists, its size and when it was written. Not what's in it.</li>
           <li>It's permanent. If your 12 words leak, whoever has them can open every record.</li>
           <li>Your videos stay on YouTube. We never download or copy them.</li>
-        </ul>
+        </ul></details>
         <h3 style="margin-top:18px">Your minted videos <span class="badge live">Live</span></h3>
         <p class="mute">Opened on this device by your wallet. Nobody else sees them.</p>
         <button class="btn btn-ghost" id="openBtn" type="button">Open my records</button>
         <div id="mintedList"></div>
+        </div></dialog>
       </div>
     </li>
   </ol>

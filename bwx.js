@@ -1,6 +1,8 @@
 /* Connect bWalletX on bvideox.com: drop <span data-bwx></span> anywhere and include this after
    @bwalletx/connect's global build and qrcode-generator. Extension / in-app wallets connect straight away;
-   on a desktop with no extension it shows a QR to pair the phone app (or paste into web.bwalletx.com). */
+   on a desktop with no extension it shows a QR to pair the phone app (or paste into web.bwalletx.com).
+   Once connected the button shows the wallet's paymail name ($name), never the identity key.
+   <span data-bwx="studio"></span> turns into a "Your studio" link once connected. */
 (() => {
   const C = window.bWalletXConnect;
   const slots = [...document.querySelectorAll('[data-bwx]')];
@@ -18,15 +20,28 @@
   .bwx-link{word-break:break-all;font-size:11px;color:#9a968b;background:#000;border-radius:8px;padding:8px;margin-top:8px;cursor:copy}`;
   document.head.appendChild(css);
 
-  let key = null, wallet = null;
+  let key = null, wallet = null, alias = null;
+  /** $name for an identity key, from the bWalletX paymail server (public lookup). */
+  const nameFor = async (k) => {
+    try { const r = await fetch('https://pay.bwallet.space/api/paymail/lookup?key=' + k); const j = await r.json(); return r.ok && j.alias ? j.alias : null; } catch { return null; }
+  };
+  const setKey = async (k) => { key = k || null; alias = null; draw(); if (key) { const a = await nameFor(key); if (key === k) { alias = a; draw(); } } };
+  window.bvxIdentity = () => ({ identityKey: key, alias });
   /** The connected BRC-100 wallet (for signing claims): this session's, or a restored extension/pairing. */
   window.bvxWallet = async () => wallet || (wallet = (await C.connectBwalletX({})).wallet);
   const draw = () => slots.forEach((s) => {
     s.innerHTML = '';
+    const label = alias ? '$' + esc(alias) : key ? 'bWalletX connected' : '';
+    if (key && s.dataset.bwx === 'studio') {
+      const a = document.createElement('a');
+      a.className = 'bwx-btn on'; a.href = '/studio';
+      a.innerHTML = `Your studio${alias ? ' · ' + label : ''} <span aria-hidden="true">&rarr;</span>`;
+      s.appendChild(a); return;
+    }
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'bwx-btn' + (key ? ' on' : '');
-    b.innerHTML = key ? `<span class="bwx-dot"></span>bWalletX ${short(key)}` : 'Connect bWalletX';
+    b.innerHTML = key ? `<span class="bwx-dot"></span>${label}` : 'Connect bWalletX';
     b.title = key ? 'Connected. Click to disconnect.' : 'Connect your bWalletX';
     b.onclick = key ? disconnect : connect;
     s.appendChild(b);
@@ -65,7 +80,7 @@
         },
       });
       const v = await post('/api/bwalletx/verify', { identityKey: r.identityKey, nonce: r.nonce, signature: r.signature, ticket });
-      key = v.identityKey; wallet = r.wallet; close(); draw();
+      wallet = r.wallet; close(); setKey(v.identityKey);
       document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: key } }));
     } catch (e) {
       if (e && e.code === 'NOT_FOUND') {
@@ -80,9 +95,9 @@
   async function disconnect() {
     await post('/api/bwalletx/session', {}).catch(() => {});
     try { C.clearPairing?.(); } catch {}
-    key = null; wallet = null; draw();
+    wallet = null; setKey(null);
     document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: null } }));
   }
-  fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => { key = j.identityKey || null; draw(); }).catch(draw);
+  fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => setKey(j.identityKey || null)).catch(draw);
   draw();
 })();

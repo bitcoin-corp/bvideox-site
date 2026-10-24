@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   const identityKey = s?.sub || null;
   if (req.method !== 'POST') {
     const claim = ok ? await claimState('youtube', ok.channelId) : null;
-    return res.status(200).json({ verified: ok && { slug: ok.slug, channelId: ok.channelId, email: ok.email || null, verifiedAt: ok.verifiedAt }, identityKey, claim });
+    return res.status(200).json({ verified: ok && { slug: ok.slug, channelId: ok.channelId, name: ok.name || null, studio: !!ok.studio, email: ok.email || null, verifiedAt: ok.verifiedAt }, identityKey, claim });
   }
   if (!ok) return res.status(401).json({ error: 'Prove the channel is yours first (Google step)', code: 'reverify' });
   if (!identityKey) return res.status(401).json({ error: 'Connect bWalletX first' });
