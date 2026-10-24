@@ -1,5 +1,5 @@
 // Step 5 on /c/<slug>/claim: mint private video records. Only the identity the channel is claimed to can mint.
-// Safety: LIVE + LIVE_LIMIT cap real writes (owner's first test = 3 videos). Real writes also need the wallet to pin
+// LIVE gates real writes; LIVE_LIMIT is no longer a cap (owner 24 Oct: users mint what they want). Real writes also need the wallet to pin
 // [2,'bvideox records'] to bvideox.com (getVersion().pinnedProtocols >= PIN_VERSION) and the premium payee set on
 // the server. Any check failing = the page refuses to write. Dry run is always available and sends nothing.
 import * as R from './records.js';

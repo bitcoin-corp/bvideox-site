@@ -273,7 +273,7 @@ function checklist() {
     ['Use your own domain', false],
     ['Link YouTube with Google', ytLive],
     ['See every public video on your channel', true],
-    [`Mint one video, or pick a few (first ${S.LIVE_LIMIT} while we test)`, true],
+    ['Mint one video, a few, or all of them', true],
     ['Mint the whole channel in one go', false],
     ['Video walkthrough for YouTube settings', false],
   ];
