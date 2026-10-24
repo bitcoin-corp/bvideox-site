@@ -1,11 +1,12 @@
 {
   "mint": {
     "feeSatPerKb": 100,
-    "bytesPerItem": 620,
+    "bytesPerItem": 840,
     "outputSats": 1,
-    "premiumUsdPerItem": 0.01,
-    "premiumIsPlaceholder": true,
-    "note": "Pointer + metadata mint: {title, url, published, sha256(metadata)} in one 1-sat output. premiumUsdPerItem is the b service premium placeholder [PREMIUM] until the owner sets it."
+    "premiumGbpPerItem": 0.01,
+    "premiumIsPlaceholder": false,
+    "perTx": 25,
+    "note": "Private record mint (mint/records.js): each video's metadata encrypted with the owner's keys, 0-sat OP_RETURN output, 25 per tx. b premium = 1p (GBP) per video, owner 24 Oct 2026, converted at live rates and paid to BVIDEOX_PREMIUM_ADDRESS (Vercel env)."
   },
   "channels": [
     {

@@ -70,7 +70,7 @@
     <a class="btn btn-ghost" id="mintBtn" href="#" aria-disabled="true">Claim to mint</a>
   </div>
   <div class="tiers">
-    <div class="tier"><h3>Mint the record <span class="badge coming">Coming</span></h3><p>Title, date, link, description and a fingerprint of each video, signed by the owner. No export needed, priced in pennies. The default.</p></div>
+    <div class="tier"><h3>Mint the record <span class="badge live">Live</span></h3><p>Title, date, link, description and a fingerprint of each video, in the owner's name. Private by default: locked with the owner's keys. 1p per video + network fee.</p></div>
     <div class="tier"><h3>Add the full video <span class="badge coming">Coming</span></h3><p>The owner uploads their own file or a Google Takeout export, priced per video before anything is written. We never download from YouTube.</p></div>
   </div>
   <h2>Videos</h2>
@@ -95,7 +95,9 @@
     $('belongs').textContent = `These videos belong to ${c.name}. Shown here with YouTube's player; views count on YouTube.`;
     if (c.status === 'claimed') {
       $('claimbar').querySelector('.wrap').innerHTML = `<span><b>Claimed</b> · ${esc(c.name)} is linked to its owner's bWalletX${c.heldPaymail ? ` · ${esc(c.heldPaymail)} opens for payments soon` : ''}</span>`;
-      $('claimbar').hidden = false; $('mintBtn').textContent = 'Claimed';
+      $('claimbar').hidden = false;
+      const mb = $('mintBtn'); mb.textContent = 'Mint (owner)'; mb.removeAttribute('aria-disabled'); mb.className = 'btn btn-gold';
+      mb.href = `/c/${encodeURIComponent(c.slug)}/claim#mint`; mb.title = "The owner's private mint: 1p per video + network fee";
     } else {
       $('cbName').textContent = c.name; $('cbMail').textContent = c.heldPaymail ? ` (${c.heldPaymail} held)` : '';
       $('claimBtn').href = `/c/${encodeURIComponent(c.slug)}/claim?id=${encodeURIComponent(c.channelId)}`; $('claimbar').hidden = false;
@@ -108,9 +110,9 @@
     $('mintall').hidden = false;
     $('grid').innerHTML = j.videos.map((v) => `<article class="vid">
       <button class="player" type="button" data-id="${esc(v.id)}" style="background-image:url(https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg)" aria-label="Play ${esc(v.title)} (YouTube player)"><span class="pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span></button>
-      <div class="vm"><b>${esc(v.title)}</b><div class="row"><span>${esc(day(v))}</span><span class="chip" title="Pointer + metadata record at today's fee rate plus b's service premium. Only the channel owner can mint.">Mint price ~${usd(q.perItem.usd)}</span></div></div></article>`).join('');
+      <div class="vm"><b>${esc(v.title)}</b><div class="row"><span>${esc(day(v))}</span><span class="chip" title="1p per video + network fee, at today's rates. Only the channel owner can mint.">Mint 1p + fee</span></div></div></article>`).join('');
     const more = total && total > j.videos.length ? ` Showing the latest ${j.videos.length} of ${total}; the full back catalogue loads once the YouTube API key is set up.` : '';
-    $('state').textContent = (j.videos.length ? '' : 'No public videos found.') + more + (q.premiumIsPlaceholder ? ' Prices are estimates: chain fee + a placeholder b premium.' : '');
+    $('state').textContent = (j.videos.length ? '' : 'No public videos found.') + more + ' Minting costs 1p per video + network fee.';
     $('grid').addEventListener('click', (e) => {
       const b = e.target.closest('.player'); if (!b || b.querySelector('iframe')) return;
       b.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.id)}?autoplay=1&rel=0" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;

@@ -1,7 +1,7 @@
 // /c/:slug and /c/:slug/claim -> the channel/claim HTML with per-channel title, OG and robots.
 // Registry (curated) channels are indexable; on-the-fly channels from the handle box are noindex until claimed or curated.
 import { readFileSync } from 'node:fs';
-import { findChannel } from './_channels.js';
+import { findChannel, resolveHandle } from './_channels.js';
 import { claimState } from './claim/_claim.js';
 
 const T = {
@@ -15,7 +15,11 @@ export default async function handler(req, res) {
   const page = req.query?.page === 'claim' ? 'claim' : 'channel';
   const c = findChannel(slug);
   const name = c?.displayName || (slug ? '@' + slug : 'Channel');
-  const id = c?.channelId || (/^UC[\w-]{22}$/.test(slug) ? slug : null);
+  // Handles not in the registry (e.g. /c/bo4se) are resolved to their channel id here, so a live claim shows in
+  // the initial HTML (robots meta + X-Robots-Tag), not only after the page's JS runs.
+  const id = c?.channelId || (/^UC[\w-]{22}$/.test(slug) ? slug : slug
+    ? (await Promise.race([resolveHandle(slug).catch(() => null), new Promise((r) => setTimeout(r, 2500, null))]))?.channelId || null
+    : null);
   const claimed = c?.status === 'claimed' || !!(await claimState('youtube', id))?.claimed;
   const curated = (!!c && c.status !== 'hidden') || claimed;
   const title = page === 'claim' ? `Claim ${name} · bVideoX` : `${name} · ${claimed ? 'on' : 'unclaimed channel on'} bVideoX`;

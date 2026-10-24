@@ -1,0 +1,212 @@
+// bVideoX private video records: pure helpers (browser + node). No network, no wallet state.
+//
+// Each video's record is encrypted with the owner's own keys (BRC-100 wallet.encrypt, BRC-2,
+// protocol [2,'bvideox records'], counterparty self, a fresh random key id per video). The chain shows that a
+// record exists, its size and time; only the owner's 12 words open it. Publishing one record in clear is opt-in.
+//
+// Output script (one per video, 0 sats):
+//   OP_FALSE OP_RETURN B <ciphertext> application/octet-stream binary | MAP SET app bvideox type record v 1 enc brc2 kid <kid>
+// Public record (opt-in, one per video):
+//   OP_FALSE OP_RETURN B <json> application/json utf-8 | MAP SET app bvideox type record-public v 1 reveal <txid:vout> kid <kid>
+//     | BRC3 <publicKey> <signature over sha256(json)>
+
+export const PROTOCOL = [2, 'bvideox records'];
+export const LABEL = PROTOCOL[1];
+export const APP = 'bvideox';
+export const VERSION = '1';
+export const B_PREFIX = '19HxigV4QyBv3tHpQVcUEQyq1pzZVdoAut';
+export const MAP_PREFIX = '1PuQa7K62MiKCtssSLKy1kh56WWU7MtUR5';
+export const SIG = 'BRC3';
+export const PER_TX = 25;
+export const PAD_BUCKET = 128;
+/** BRC-2: 32-byte IV + AES-GCM ciphertext + 16-byte tag. */
+export const BRC2_OVERHEAD = 48;
+/** Inputs, change output, version/locktime per transaction (estimate). */
+export const TX_OVERHEAD_BYTES = 400;
+/** The premium output (P2PKH, 8 + 1 + 25). */
+export const PREMIUM_OUTPUT_BYTES = 34;
+/** Wallet getVersion().pinnedProtocols value that includes [2,'bvideox records'] (bitcoin-corp/bwallet #61). */
+export const PIN_VERSION = 2;
+
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+const hex = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+const unhex = (h) => Uint8Array.from(String(h).match(/../g) ?? [], (x) => parseInt(x, 16));
+const sha256 = async (d) => new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', d));
+
+/** The metadata we keep for one video (no media), in a fixed key order. */
+export const metaFor = (c, v) => ({
+  platform: c.platform || 'youtube', channelId: c.channelId, videoId: v.id, title: v.title || '',
+  description: v.description || '', publishedAt: v.published || null, url: `https://www.youtube.com/watch?v=${v.id}`,
+});
+/** The record: metadata + sha256 of the metadata JSON (hex). */
+export async function recordFor(c, v) {
+  const meta = metaFor(c, v);
+  return { v: 1, ...meta, sha256: hex(await sha256(enc.encode(JSON.stringify(meta)))) };
+}
+/** JSON then spaces up to the next PAD_BUCKET (JSON.parse ignores trailing whitespace), so sizes say less. */
+export function pad(rec, bucket = PAD_BUCKET) {
+  const raw = enc.encode(JSON.stringify(rec));
+  const out = new Uint8Array(Math.ceil((raw.length + 1) / bucket) * bucket).fill(0x20);
+  out.set(raw);
+  return out;
+}
+export function readRecord(plaintext) {
+  const j = JSON.parse(dec.decode(Uint8Array.from(plaintext)));
+  if (!j || j.v !== 1 || typeof j.videoId !== 'string' || typeof j.channelId !== 'string') throw new Error('not a bvideox record');
+  return j;
+}
+/** Does the record's sha256 match its metadata? */
+export async function checkRecord(r) {
+  const { v, sha256: s, ...meta } = r;
+  const m = { platform: meta.platform, channelId: meta.channelId, videoId: meta.videoId, title: meta.title, description: meta.description, publishedAt: meta.publishedAt, url: meta.url };
+  return hex(await sha256(enc.encode(JSON.stringify(m)))) === s;
+}
+/** 128-bit random key id, hex: says nothing about the video. */
+export const newKeyId = (rand = (a) => globalThis.crypto.getRandomValues(a)) => hex(rand(new Uint8Array(16)));
+
+// ── scripts ───────────────────────────────────────────────────────────────────
+const pushData = (d) => {
+  const n = d.length;
+  const head = n < 0x4c ? [n] : n <= 0xff ? [0x4c, n] : n <= 0xffff ? [0x4d, n & 0xff, n >> 8] : [0x4e, n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff, n >>> 24];
+  return [...head, ...d];
+};
+const s = (t) => enc.encode(t);
+const PIPE = s('|');
+const opReturn = (parts) => hex([0x00, 0x6a, ...parts.flatMap((p) => pushData(Array.from(p)))]);
+
+export const recordScript = (kid, ciphertext) => opReturn([
+  s(B_PREFIX), Uint8Array.from(ciphertext), s('application/octet-stream'), s('binary'), PIPE,
+  s(MAP_PREFIX), s('SET'), s('app'), s(APP), s('type'), s('record'), s('v'), s(VERSION), s('enc'), s('brc2'), s('kid'), s(kid),
+]);
+
+export function readPushes(scriptHex) {
+  const b = unhex(scriptHex);
+  if (b[0] !== 0x00 || b[1] !== 0x6a) return null;
+  const out = [];
+  for (let i = 2; i < b.length;) {
+    const op = b[i++];
+    let n;
+    if (op < 0x4c) n = op;
+    else if (op === 0x4c) n = b[i++];
+    else if (op === 0x4d) { n = b[i] | (b[i + 1] << 8); i += 2; }
+    else if (op === 0x4e) { n = (b[i] | (b[i + 1] << 8) | (b[i + 2] << 16)) + b[i + 3] * 2 ** 24; i += 4; }
+    else return null;
+    if (i + n > b.length) return null;
+    out.push(b.slice(i, i + n));
+    i += n;
+  }
+  return out;
+}
+/** A record output's kid and ciphertext, or null. */
+export function parseRecordScript(scriptHex) {
+  const p = readPushes(scriptHex);
+  if (!p || p.length !== 17) return null;
+  const t = p.map((x) => dec.decode(x));
+  if (t[0] !== B_PREFIX || t[4] !== '|' || t[5] !== MAP_PREFIX || t[8] !== APP || t[10] !== 'record' || t[14] !== 'brc2' || t[15] !== 'kid') return null;
+  if (!/^[0-9a-f]{32}$/.test(t[16])) return null;
+  return { kid: t[16], ciphertext: p[1] };
+}
+
+// ── premium payee (P2PKH from a base58check address) ──────────────────────────
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+/** P2PKH locking script for a mainnet address, checksum verified. Throws on anything else. */
+export async function p2pkhScriptFor(address) {
+  let n = 0n;
+  for (const ch of String(address)) { const i = B58.indexOf(ch); if (i < 0) throw new Error('bad address'); n = n * 58n + BigInt(i); }
+  let h = n.toString(16); if (h.length % 2) h = '0' + h;
+  const lead = (String(address).match(/^1*/) || [''])[0].length;
+  const b = Uint8Array.from([...new Array(lead).fill(0), ...unhex(h)]);
+  if (b.length !== 25 || b[0] !== 0x00) throw new Error('not a mainnet P2PKH address');
+  const sum = (await sha256(await sha256(b.slice(0, 21)))).slice(0, 4);
+  if (hex(sum) !== hex(b.slice(21))) throw new Error('address checksum failed');
+  return '76a914' + hex(b.slice(1, 21)) + '88ac';
+}
+
+// ── price ─────────────────────────────────────────────────────────────────────
+/** Premium per video in sats from GBP and live rates (rounded up, at least 1 sat). */
+export const premiumSats = (gbpPerItem, usdPerBsv, usdPerGbp) => Math.max(1, Math.ceil((gbpPerItem * usdPerGbp / usdPerBsv) * 1e8));
+const pushLen = (n) => n + (n < 0x4c ? 1 : n <= 0xff ? 2 : n <= 0xffff ? 3 : 5);
+/** Exact bytes of one record output (8-byte value + varint + script) for a padded plaintext length. */
+export function outputBytes(plaintextBytes) {
+  const parts = [B_PREFIX.length, plaintextBytes + BRC2_OVERHEAD, 24, 6, 1, MAP_PREFIX.length, 3, 3, APP.length, 4, 6, 1, 1, 3, 4, 3, 32];
+  const script = 2 + parts.reduce((a, n) => a + pushLen(n), 0);
+  return 8 + (script < 0xfd ? 1 : script <= 0xffff ? 3 : 5) + script;
+}
+export const feeSats = (bytes, satPerKb) => Math.ceil((bytes * satPerKb) / 1000);
+/** Plan a mint: batches, bytes, network fee, premium. */
+export async function plan(c, videos, o) {
+  const perTx = o.perTx || PER_TX, batches = [];
+  for (let i = 0; i < videos.length; i += perTx) batches.push(videos.slice(i, i + perTx));
+  let bytes = 0, fee = 0;
+  for (const b of batches) {
+    let tx = TX_OVERHEAD_BYTES + PREMIUM_OUTPUT_BYTES;
+    for (const v of b) tx += outputBytes(pad(await recordFor(c, v)).length);
+    bytes += tx; fee += feeSats(tx, o.satPerKb);
+  }
+  const prem = premiumSats(o.gbpPerItem, o.usdPerBsv, o.usdPerGbp);
+  return { videos: videos.length, txs: batches.length, bytes, feeSats: fee, premiumSatsPerItem: prem, premiumSats: prem * videos.length, totalSats: fee + prem * videos.length, batches };
+}
+
+// ── encrypt / decrypt ─────────────────────────────────────────────────────────
+/** Encrypt one batch with the wallet and build its outputs (records first, premium last when a payee is given). */
+export async function encryptBatch(wallet, c, videos, o = {}) {
+  const outputs = [], items = [];
+  for (const v of videos) {
+    const kid = newKeyId(o.rand);
+    const { ciphertext } = await wallet.encrypt({ plaintext: Array.from(pad(await recordFor(c, v))), protocolID: PROTOCOL, keyID: kid, counterparty: 'self' });
+    items.push({ videoId: v.id, kid, vout: outputs.length });
+    outputs.push({ lockingScript: recordScript(kid, ciphertext), satoshis: 0, outputDescription: 'Private video record' });
+  }
+  if (o.payeeScript && o.premiumSatsPerItem) outputs.push({ lockingScript: o.payeeScript, satoshis: o.premiumSatsPerItem * videos.length, outputDescription: `bVideoX: 1p per video × ${videos.length}` });
+  return { outputs, items };
+}
+/** Decrypt one record output locally. */
+export async function openRecord(wallet, scriptHex) {
+  const r = parseRecordScript(scriptHex);
+  if (!r) return null;
+  const { plaintext } = await wallet.decrypt({ ciphertext: Array.from(r.ciphertext), protocolID: PROTOCOL, keyID: r.kid, counterparty: 'self' });
+  return { kid: r.kid, record: readRecord(plaintext) };
+}
+
+/**
+ * Run a mint, batch by batch, resumable. `done` is a map videoId -> outpoint already written; those are skipped.
+ * Live: one createAction per batch (label 'bvideox records', spendingAuthorization for the protocol, so a spending
+ * grant can cover it). Dry run: nothing is sent; built outputs go to onDry. After each batch, onBatch(entries) is
+ * called with [{videoId, kid, outpoint}] so the caller saves progress before the next batch.
+ */
+export async function runMint(o) {
+  const todo = o.videos.filter((v) => !o.done?.[v.id]);
+  const perTx = o.perTx || PER_TX;
+  for (let i = 0; i < todo.length; i += perTx) {
+    if (o.signal?.aborted) throw new Error('stopped');
+    const vids = todo.slice(i, i + perTx);
+    const b = await encryptBatch(o.wallet, o.channel, vids, o);
+    let txid;
+    if (o.dryRun) { txid = 'dry' + (o.dryN = (o.dryN || 0) + 1); await o.onDry?.(b); }
+    else {
+      const r = await o.wallet.createAction({
+        description: `bVideoX: ${vids.length} private video record${vids.length === 1 ? '' : 's'}`,
+        outputs: b.outputs, labels: [LABEL],
+        options: { randomizeOutputs: false, acceptDelayedBroadcast: true, spendingAuthorization: { protocolID: PROTOCOL } },
+      });
+      if (!r?.txid) throw new Error('The wallet returned no transaction.');
+      txid = r.txid;
+    }
+    await o.onBatch?.(b.items.map((it) => ({ videoId: it.videoId, kid: it.kid, outpoint: `${txid}:${it.vout}`, script: o.dryRun ? b.outputs[it.vout].lockingScript : undefined })));
+  }
+}
+
+// ── make one record public (opt-in) ───────────────────────────────────────────
+/** The clear record + the owner's signature (key derived under the protocol, keyID 'public <kid>'). */
+export async function publicScript(wallet, rec, kid, outpoint) {
+  const json = enc.encode(JSON.stringify(rec));
+  const keyID = `public ${kid}`;
+  const { publicKey } = await wallet.getPublicKey({ protocolID: PROTOCOL, keyID, counterparty: 'self' });
+  const { signature } = await wallet.createSignature({ data: Array.from(await sha256(json)), protocolID: PROTOCOL, keyID, counterparty: 'self' });
+  return opReturn([
+    s(B_PREFIX), json, s('application/json'), s('utf-8'), PIPE,
+    s(MAP_PREFIX), s('SET'), s('app'), s(APP), s('type'), s('record-public'), s('v'), s(VERSION), s('reveal'), s(outpoint), s('kid'), s(kid),
+    PIPE, s(SIG), s(publicKey), s(hex(signature)),
+  ]);
+}

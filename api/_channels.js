@@ -122,24 +122,35 @@ export function limited(req, max = 20, windowMs = 60_000) {
   return e.n > max;
 }
 
-/** What the channel owner would pay to mint one pointer+metadata record per video, at today's fee rate + premium. */
+/** Live rates: USD per BSV (WhatsOnChain) and USD per GBP (ECB via frankfurter.app). Null when unreachable. */
+export async function rates() {
+  const get = (u, f) => fetch(u, { signal: AbortSignal.timeout(2500) }).then((r) => r.json()).then(f).catch(() => null);
+  const [usdPerBsv, usdPerGbp] = await Promise.all([
+    get('https://api.whatsonchain.com/v1/bsv/main/exchangerate', (j) => Number(j.rate) || null),
+    get('https://api.frankfurter.app/latest?from=GBP&to=USD', (j) => Number(j.rates?.USD) || null),
+  ]);
+  return { usdPerBsv, usdPerGbp };
+}
+
+/** What the channel owner pays per video: the network fee for a private record + b's premium (1p per video). */
 export async function mintQuote(videos) {
   const m = registry.mint;
-  let usdPerBsv = null;
-  try { const r = await fetch('https://api.whatsonchain.com/v1/bsv/main/exchangerate'); usdPerBsv = (await r.json()).rate || null; } catch {}
-  const sats = Math.ceil((m.bytesPerItem * m.feeSatPerKb) / 1000) + m.outputSats;
+  const { usdPerBsv, usdPerGbp } = await rates();
+  const sats = Math.ceil((m.bytesPerItem * m.feeSatPerKb) / 1000);
   const chainUsd = usdPerBsv ? (sats / 1e8) * usdPerBsv : null;
-  const perItemUsd = (chainUsd ?? 0) + m.premiumUsdPerItem;
+  const premiumUsd = m.premiumGbpPerItem * (usdPerGbp || 1.3);
+  const perItemUsd = (chainUsd ?? 0) + premiumUsd;
   return {
-    perItem: { sats, chainUsd, premiumUsd: m.premiumUsdPerItem, usd: perItemUsd },
+    perItem: { sats, chainUsd, premiumGbp: m.premiumGbpPerItem, premiumUsd, usd: perItemUsd },
     all: { count: videos.length, sats: sats * videos.length, usd: perItemUsd * videos.length },
-    usdPerBsv, feeSatPerKb: m.feeSatPerKb, premiumIsPlaceholder: m.premiumIsPlaceholder,
+    usdPerBsv, usdPerGbp, feeSatPerKb: m.feeSatPerKb, premiumIsPlaceholder: m.premiumIsPlaceholder,
     whoCanMint: 'only the channel owner',
   };
 }
 
 /** The record a mint would carry for one video (and the sha the chain would commit to). */
 export function mintRecord(c, v) {
-  const meta = { platform: c.platform, channelId: c.channelId, videoId: v.id, title: v.title, description: v.description || '', url: `https://www.youtube.com/watch?v=${v.id}`, published: v.published };
+  // Same fields and order as mint/records.js metaFor, so this sha matches the minted record's.
+  const meta = { platform: c.platform || 'youtube', channelId: c.channelId, videoId: v.id, title: v.title || '', description: v.description || '', publishedAt: v.published || null, url: `https://www.youtube.com/watch?v=${v.id}` };
   return { ...meta, sha256: createHash('sha256').update(JSON.stringify(meta)).digest('hex') };
 }
