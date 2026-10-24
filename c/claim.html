@@ -59,7 +59,7 @@
   <ol class="steps">
     <li class="step done" id="sFind"><h3>Find</h3><p>✓ Found your channel<span id="findTxt"></span>.</p></li>
     <li class="step done" id="sShow"><h3>Show</h3><p>✓ Your catalogue and mint price are on <a id="showLink" href="/">the channel page</a>.</p></li>
-    <li class="step" id="s1"><h3>Prove</h3><p id="s1Txt">Sign in with the Google account that owns the channel. We check it read-only with YouTube and drop the access straight after.</p><p id="s2Txt" class="ok" hidden></p><a class="btn btn-gold" id="googleBtn" href="#" aria-disabled="true">Coming soon</a></li>
+    <li class="step" id="s1"><h3>Prove</h3><p id="s1Txt">Paste a short code in your channel description, then press Check. No Google sign-in. Connect bWalletX first: the code is tied to your wallet.</p><p id="s2Txt" class="ok" hidden></p><a class="btn btn-gold" id="googleBtn" href="#" aria-disabled="true">Coming soon</a></li>
     <li class="step" id="s3"><h3>Bind</h3><p>Connect bWalletX and sign, so the channel<span id="mailTxt"></span> is linked to your identity key.</p><span data-bwx></span> <button class="btn btn-ghost" id="bindBtn" type="button" hidden>Bind channel to my wallet</button><p class="ok" id="boundTxt" hidden></p></li>
     <li class="step" id="s4"><h3 id="mint">Mint <span class="badge coming" id="mintBadge">Dry run</span></h3>
       <p>Put each video's record on chain in your own name: title, description, date, link and a fingerprint. <b>Private by default</b>: locked with your bWalletX keys, so only your 12 words open it. Make any one public later, if you want. <b>1p per video + network fee.</b></p>
@@ -88,12 +88,13 @@
       </div>
     </li>
   </ol>
-  <div class="setup" id="setup">Claiming opens once Google sign-in is set up for bVideoX. You can still watch the channel page now.</div>
+  <div class="setup" id="setup">Claiming opens shortly. You can still watch the channel page now.</div>
 </main>
-<footer>bVideoX · part of the bWalletX family · <a href="https://bwalletx.com/get">Get bWalletX</a></footer>
+<footer>bVideoX · part of the bWalletX family · <a href="https://bwalletx.com/get">Get bWalletX</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></footer>
 <script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="/bwx.js"></script>
+<script src="/claim-code.js"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -132,7 +133,7 @@
   };
   let mintMod = null;
   const load = () => fetch('/api/claim/bind').then((r) => r.json()).then((b) => {
-    verified = b.verified?.slug === channel.slug ? b.verified : null; key = b.identityKey || key; claim = b.claim || claim; saving = 'claim' in b;
+    verified = b.verified?.channelId === channel.channelId ? b.verified : null; key = b.identityKey || key; claim = b.claim || claim; saving = 'claim' in b;
     if (verified) { history.replaceState(null, '', location.pathname); showErr(''); }
     paint();
   }).catch(paint);
@@ -156,14 +157,19 @@
     if (!on && !TEST) $('claimBadge').hidden = false;
     if (on && channel) {
       $('claimBadge').className = 'badge live'; $('claimBadge').textContent = 'Live'; $('claimBadge').hidden = false; $('setup').hidden = true;
-      const g = $('googleBtn'); g.textContent = 'Sign in with Google'; g.removeAttribute('aria-disabled');
-      g.href = `/api/claim/youtube/start?slug=${encodeURIComponent(channel.slug)}&id=${encodeURIComponent(channel.channelId)}`;
+      const g = $('googleBtn'); g.textContent = 'Prove it’s mine'; g.removeAttribute('aria-disabled');
+      google = st.google ? `/api/claim/youtube/start?slug=${encodeURIComponent(channel.slug)}&id=${encodeURIComponent(channel.channelId)}` : null;
       load();
     }
     paint();
   });
   document.addEventListener('bvideox-wallet', (e) => { key = e.detail.identityKey; paint(); mintMod?.setKey(key); });
-  $('googleBtn').addEventListener('click', (e) => { if (e.currentTarget.getAttribute('aria-disabled')) e.preventDefault(); });
+  let google = null;
+  $('googleBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    if (e.currentTarget.getAttribute('aria-disabled') || !channel) return;
+    window.bvxClaimCode.open({ handle: channel.handle || channel.channelId, channelId: channel.channelId, google, onVerified: () => load() });
+  });
   $('bindBtn').addEventListener('click', async () => {
     const btn = $('bindBtn'); showErr(''); btn.disabled = true; btn.textContent = 'Check your wallet…';
     try {
