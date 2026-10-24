@@ -171,8 +171,8 @@ export async function openRecord(wallet, scriptHex) {
 
 /**
  * Run a mint, batch by batch, resumable. `done` is a map videoId -> outpoint already written; those are skipped.
- * Live: one createAction per batch (label 'bvideox records', spendingAuthorization for the protocol, so a spending
- * grant can cover it). Dry run: nothing is sent; built outputs go to onDry. After each batch, onBatch(entries) is
+ * Live: one createAction per batch (label 'bvideox records', spendingAuthorization for the protocol, so the wallet
+ * shows ONE sheet for the lock and the payment), then the txid is checked on chain before the batch is saved. Dry run: nothing is sent; built outputs go to onDry. After each batch, onBatch(entries) is
  * called with [{videoId, kid, outpoint}] so the caller saves progress before the next batch.
  */
 export async function runMint(o) {
@@ -185,16 +185,48 @@ export async function runMint(o) {
     let txid;
     if (o.dryRun) { txid = 'dry' + (o.dryN = (o.dryN || 0) + 1); await o.onDry?.(b); }
     else {
+      // acceptDelayedBroadcast: false — the wallet answers only once the network has it (24 Oct 2026: a queued send
+      // came back with a txid no node had, and the page said "Done").
       const r = await o.wallet.createAction({
         description: `bVideoX: ${vids.length} private video record${vids.length === 1 ? '' : 's'}`,
         outputs: b.outputs, labels: [LABEL],
-        options: { randomizeOutputs: false, acceptDelayedBroadcast: true, spendingAuthorization: { protocolID: PROTOCOL } },
+        options: { randomizeOutputs: false, acceptDelayedBroadcast: false, spendingAuthorization: { protocolID: PROTOCOL } },
       });
       if (!r?.txid) throw new Error('The wallet returned no transaction.');
       txid = r.txid;
+      // Never trust the answer alone: the batch counts as written only once the network shows the transaction.
+      o.onChecking?.(txid);
+      if (!(await (o.confirm || confirmOnChain)(txid, { pending: r.pending === true }))) throw notOnChain(txid);
     }
     await o.onBatch?.(b.items.map((it) => ({ videoId: it.videoId, kid: it.kid, outpoint: `${txid}:${it.vout}`, script: o.dryRun ? b.outputs[it.vout].lockingScript : undefined })));
   }
+}
+
+// ── did it really go out? ─────────────────────────────────────────────────────
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ARC_SEEN = /^(SEEN_ON_NETWORK|MINED|ACCEPTED_BY_NETWORK|SEEN_IN_ORPHAN_MEMPOOL)$/;
+/**
+ * True once WhatsOnChain or GorillaPool ARC knows the transaction. Short retry (about 30 s; longer when the wallet
+ * said the send is pending). `fetchFn` is injectable for tests.
+ */
+export async function confirmOnChain(txid, { pending = false, fetchFn = fetch, wait = sleep } = {}) {
+  if (!/^[0-9a-f]{64}$/i.test(String(txid))) return false;
+  const delays = pending ? [1500, 3000, 5000, 8000, 12000, 20000, 30000] : [1000, 2000, 3000, 5000, 8000, 12000];
+  for (const d of delays) {
+    try { const r = await fetchFn(`https://api.whatsonchain.com/v1/bsv/main/tx/hash/${txid}`, { cache: 'no-store' }); if (r.ok) return true; } catch {}
+    try {
+      const r = await fetchFn(`https://arc.gorillapool.io/v1/tx/${txid}`, { cache: 'no-store' });
+      if (r.ok) { const j = await r.json().catch(() => null); if (j && ARC_SEEN.test(String(j.txStatus || ''))) return true; }
+    } catch {}
+    await wait(d);
+  }
+  return false;
+}
+/** The error a batch the network never showed raises. `code` lets the page word it. */
+export function notOnChain(txid) {
+  const e = new Error(`Your wallet answered, but the network doesn't show the transaction (${String(txid).slice(0, 10)}…), so nothing is marked as minted. Your bWalletX keeps trying to send it on its own; nothing more is charged if you wait. Check again in a few minutes before you press Mint again.`);
+  e.code = 'NOT_ON_CHAIN'; e.txid = txid;
+  return e;
 }
 
 // ── make one record public (opt-in) ───────────────────────────────────────────

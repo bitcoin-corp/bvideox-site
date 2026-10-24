@@ -40,9 +40,12 @@ async function paint() {
   $('mintBadge').className = 'badge ' + (block ? 'coming' : 'live'); $('mintBadge').textContent = block ? 'Dry run' : 'Live';
 }
 
+/** Errors go inside the modal, next to the Mint button (never a browser dialog). */
+function showErr(t) { const el = $('mintErr'); if (!el) return; el.textContent = t || ''; el.hidden = !t; }
+
 async function run(dryRun) {
   if (busy) return;
-  const msg = $('mintMsg'); busy = true; paint();
+  const msg = $('mintMsg'); busy = true; showErr(''); paint();
   try {
     const w = await window.bvxWallet();
     walletKey = (await w.getPublicKey({ identityKey: true })).publicKey;
@@ -60,10 +63,12 @@ async function run(dryRun) {
     if (!dryRun && !payeeScript) throw new Error('No payee set.');
     let n = 0;
     const dry = [];
-    msg.textContent = 'Check your wallet: it asks once to lock your records with your keys' + (dryRun ? '.' : ', then once per batch to pay.');
+    msg.textContent = dryRun ? 'Check your wallet: it encrypts your records with your keys. Nothing is sent.'
+      : `Check your wallet: one approval, "Mint ${videosN(sel.length)}, locked to you on bvideox.com", covers locking and paying.`;
     await R.runMint({
       wallet: w, channel: ch, videos: sel, dryRun, perTx: cfg.perTx || R.PER_TX, payeeScript, premiumSatsPerItem: p.premiumSatsPerItem,
       done: dryRun ? {} : done(),
+      onChecking: () => { msg.textContent = 'Approved. Checking the network has it…'; },
       onBatch: (es) => {
         n += es.length;
         if (dryRun) dry.push(...es);
@@ -78,7 +83,8 @@ async function run(dryRun) {
     picked.clear();
     await readBack(w);
   } catch (e) {
-    msg.textContent = friendly(e);
+    msg.textContent = '';
+    showErr(friendly(e));
   }
   busy = false; paint();
 }

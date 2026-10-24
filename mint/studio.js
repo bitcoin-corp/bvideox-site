@@ -38,11 +38,12 @@ export async function mint({ channel, videos, key, onStatus = () => {} }) {
     const sel = todo.slice(0, room);
     const p = await R.plan(channel, sel, cfg);
     const payeeScript = await R.p2pkhScriptFor(cfg.payee);
-    onStatus('Check your wallet: it asks once to lock your records with your keys, then once per batch to pay.');
+    onStatus(`Check your wallet: one approval, "Mint ${videosN(sel.length)}, locked to you on bvideox.com", covers locking and paying.`);
     let n = 0;
     await R.runMint({
       wallet: w, channel, videos: sel, dryRun: false, perTx: cfg.perTx || R.PER_TX, payeeScript, premiumSatsPerItem: p.premiumSatsPerItem,
       done,
+      onChecking: () => onStatus('Approved. Checking the network has it…'),
       onBatch: (es) => {
         const d = doneFor(channel.channelId, key);
         for (const e of es) d[e.videoId] = { outpoint: e.outpoint, kid: e.kid };
