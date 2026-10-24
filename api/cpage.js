@@ -14,12 +14,12 @@ export default async function handler(req, res) {
   const slug = (s => /^UC[\w-]{22}$/.test(s) ? s : s.toLowerCase())(String(req.query?.slug || '')).replace(/[^\w.-]/g, '').slice(0, 40);
   const page = req.query?.page === 'claim' ? 'claim' : 'channel';
   const c = findChannel(slug);
-  const name = c?.displayName || (slug ? '@' + slug : 'Channel');
-  // Handles not in the registry (e.g. /c/bo4se) are resolved to their channel id here, so a live claim shows in
+  // Handles not in the registry (e.g. /c/bo4se) are resolved to their channel here, so a live claim shows in
   // the initial HTML (robots meta + X-Robots-Tag), not only after the page's JS runs.
-  const id = c?.channelId || (/^UC[\w-]{22}$/.test(slug) ? slug : slug
-    ? (await Promise.race([resolveHandle(slug).catch(() => null), new Promise((r) => setTimeout(r, 2500, null))]))?.channelId || null
-    : null);
+  const r = !c && slug && !/^UC[\w-]{22}$/.test(slug)
+    ? await Promise.race([resolveHandle(slug).catch(() => null), new Promise((ok) => setTimeout(ok, 2500, null))]) : null;
+  const name = c?.displayName || r?.displayName || (slug ? '@' + slug : 'Channel');
+  const id = c?.channelId || r?.channelId || (/^UC[\w-]{22}$/.test(slug) ? slug : null);
   const claimed = c?.status === 'claimed' || !!(await claimState('youtube', id))?.claimed;
   const curated = (!!c && c.status !== 'hidden') || claimed;
   const title = page === 'claim' ? `Claim ${name} · bVideoX` : `${name} · ${claimed ? 'on' : 'unclaimed channel on'} bVideoX`;
