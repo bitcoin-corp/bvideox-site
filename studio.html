@@ -25,6 +25,7 @@ main{padding-bottom:40px}
 .panel>p{color:#cfcabd;margin:0 0 14px;max-width:680px}
 .me{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;padding:30px 0 6px}
 .av{width:84px;height:84px;border-radius:50%;background:#111 center/cover;border:2px solid var(--gold);flex:none}
+.av.init{display:grid;place-items:center;background:radial-gradient(circle at 30% 25%,#ffe08a,#d4af37 45%,#7a5a12);color:#0b0b0b;font:700 36px 'Space Grotesk'}
 .me h1{font-size:clamp(30px,6vw,52px);overflow-wrap:anywhere}
 .handle{font:600 18px 'Space Grotesk';color:var(--gold);margin:6px 0 0;overflow-wrap:anywhere}
 .mail{color:var(--mute);font-size:15px;margin:2px 0 0;overflow-wrap:anywhere}
@@ -81,8 +82,9 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
 .modal::backdrop{background:rgba(0,0,0,.8)}
 .modal[open]{display:flex;flex-direction:column}
 .modal .mb{padding:22px 20px 16px;display:flex;flex-direction:column;min-height:0;overflow:auto}
-#videos .mb{overflow:hidden;height:calc(100dvh - 32px);max-height:820px}
-#videos .scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin:6px -4px 0;padding:0 4px}
+.library{margin-top:28px;padding-bottom:12px}
+.library h2{font-size:24px}
+#videos .tools{position:sticky;bottom:0;z-index:5;background:linear-gradient(to top,var(--bg) 70%,transparent);padding:18px 0 14px;margin-top:14px}
 #videos .tools{position:static;background:none;border-top:1px solid var(--line);padding:12px 0 0;margin-top:10px}
 .modal h2{font-size:22px;padding-right:36px}
 .modal .x{position:absolute;right:12px;top:10px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#000;color:var(--ink);font-size:22px;cursor:pointer;z-index:2}
@@ -96,7 +98,7 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
 <body>
 <header class="wrap nav">
   <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a>
-  <nav class="nav-links" aria-label="Main"><a class="hide-s" href="/">Home</a><span data-bwx></span></nav>
+  <nav class="nav-links" aria-label="Main"><a class="hide-s" href="/">Home</a><a href="/browse">Browse</a><span data-bwx></span></nav>
 </header>
 <main class="wrap">
   <p class="testbar" id="testbar" hidden>Preview copy. Connecting your wallet and Google sign-in only work on <a href="https://bvideox.com/studio">bvideox.com</a>.</p>
@@ -143,7 +145,7 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
       <li id="st3"><a href="#videos" data-open="videos"><span class="n">3</span><div><b>Mint videos</b><span class="s" id="st3s">After linking</span></div></a></li>
     </ol>
 
-    <div class="row2" id="ownerLinks" hidden><button class="chip" type="button" data-open="account">Username &amp; domain</button><button class="chip" type="button" data-open="status">What works today</button></div>
+    <div class="row2" id="ownerLinks" hidden><button class="chip" type="button" data-open="account">Username &amp; domain</button><button class="chip" type="button" data-open="status">What works today</button><span data-bwx="signout"></span></div>
     <div class="row2" id="pubLinks" hidden><button class="chip" type="button" data-open="status">What works today</button></div>
 
     <!-- YouTube -->
@@ -155,10 +157,10 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
     </div></dialog>
 
     <!-- Videos -->
-    <dialog class="modal" id="videos" aria-labelledby="vH"><button class="x" type="button" data-close aria-label="Close">×</button><div class="mb">
+    <section class="library" id="videos" aria-labelledby="vH" hidden>
       <h2 id="vH">Your videos <span class="badge live" id="vBadge">Live</span></h2>
       <p id="vLede">Link YouTube to see every video you’ve posted here.</p>
-      <div class="scroll"><div class="grid" id="grid"></div></div>
+      <div class="grid" id="grid"></div>
       <div class="tools" id="tools" hidden>
         <button class="btn btn-ghost" type="button" id="selAll">Select all</button>
         <button class="btn btn-gold" type="button" id="mintSel" disabled>Mint selected</button>
@@ -171,7 +173,7 @@ details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';m
         <li>1p per video plus a small network fee, shown before you mint. Your wallet asks before anything is paid.</li>
         <li>Your videos stay on YouTube. We never download or copy them.</li>
       </ul></details>
-    </div></dialog>
+    </section>
 
     <!-- Account -->
     <dialog class="modal" id="account" aria-labelledby="aH" hidden><button class="x" type="button" data-close aria-label="Close">×</button><div class="mb">

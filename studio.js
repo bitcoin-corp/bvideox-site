@@ -41,13 +41,26 @@ async function load() {
   if (P.isOwner) {
     $('owner3').hidden = false; $('ownerLinks').hidden = false;
     if (claimOn) verified = await fetch('/api/claim/bind', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((b) => b?.verified || null).catch(() => null);
-    youtube(); account(); await loadVideos();
+    youtube(); account(); $('videos').hidden = !yt; await loadVideos();
   } else {
     $('pubLinks').hidden = false; publicView();
   }
   checklist();
   const want = location.hash.slice(1) || (qs.get('yt') || qs.get('linked') ? 'youtube' : '');
   if (P.isOwner && want) openModal(want);
+}
+
+/** Avatar: first image that loads (paymail bAvatar, then the YouTube channel picture); gold initial if none. */
+function setAvatar(urls, name) {
+  const av = $('av'); av.setAttribute('aria-label', name || '');
+  const tried = (av._tried ||= []); const list = urls.filter((u) => u && !tried.includes(u));
+  if (!av.style.backgroundImage) { av.textContent = (name || 'b').trim().charAt(0).toUpperCase(); av.classList.add('init'); }
+  for (const u of list) {
+    tried.push(u);
+    const i = new Image();
+    i.onload = () => { if (av._ok) return; av._ok = u; av.style.backgroundImage = `url("${u}")`; av.textContent = ''; av.classList.remove('init'); };
+    i.src = u;
+  }
 }
 
 function head() {
@@ -57,7 +70,7 @@ function head() {
   $('name').textContent = name;
   $('handle').textContent = st.alias ? '$' + st.alias : 'No $name yet';
   $('mail').textContent = st.paymail || 'Pick a name in bWalletX (Settings › Identity) and it shows here.';
-  if (st.avatar) { $('av').style.backgroundImage = `url("${st.avatar}")`; $('av').setAttribute('aria-label', name); }
+  setAvatar([st.avatar], name);
   if (st.username) { $('linkRow').hidden = false; $('pubLink').textContent = 'bvideox.com/u/' + st.username; }
   $('copyLink').onclick = async () => { try { await navigator.clipboard.writeText('https://bvideox.com/u/' + st.username); $('copyLink').textContent = 'Copied'; } catch { $('copyLink').textContent = 'Copy failed'; } setTimeout(() => { $('copyLink').textContent = 'Copy link'; }, 1600); };
   $('st1s').textContent = st.alias ? '$' + st.alias : 'Connected';
@@ -141,7 +154,7 @@ async function bind() {
     if (!r.ok) { if (j.code === 'reverify') verified = null; throw new Error(j.error || 'The link was not saved.'); }
     yt = { platform: 'youtube', channelId: verified.channelId, slug: verified.slug, claimedAt: j.claimedAt };
     history.replaceState(null, '', location.pathname);
-    youtube(); checklist(); openModal('videos'); await loadVideos();
+    youtube(); checklist(); $('ytMsg').textContent = ''; $('youtube').close(); $('videos').hidden = false; await loadVideos(); $('videos').scrollIntoView({ behavior: 'smooth' });
   } catch (e) {
     say($('ytMsg'), /denied|declin|reject|cancel/i.test(String(e?.message)) ? 'Your wallet said no, so nothing was linked.' : e?.code === 'NOT_FOUND' ? 'Your wallet isn’t connected in this browser. Press Connect bWalletX at the top, then try again.' : (e?.message || 'That didn’t work. Try again.'), 'bad');
     if (verified) { btn.disabled = false; btn.classList.remove('busy'); btn.textContent = 'Link it to my wallet'; } else youtube();
@@ -161,6 +174,7 @@ async function loadVideos(fresh) {
   cfg = c;
   if (!j?.channel) { $('grid').innerHTML = ''; $('vLede').textContent = 'YouTube didn’t answer just now. Press Refresh videos in a minute.'; return; }
   channel = j.channel; videos = j.videos || [];
+  setAvatar([channel.avatar], st.displayName || st.alias);
   if (!videos.length) { $('grid').innerHTML = ''; $('tools').hidden = true; $('vLede').textContent = 'No public videos found on this channel yet.'; help('no-videos'); return; }
   const total = j.channel.total;
   $('vLede').textContent = `${S.videosN(videos.length)}${total && total > videos.length ? ` of ${total} shown (YouTube only lists public ones)` : ''}. Mint one at a time, or pick several and mint them together.`;
@@ -202,6 +216,7 @@ async function mintThese(list) {
   if (busy || !list.length) return;
   busy = true; paintGrid(); paintTools();
   $('mintSel').classList.add('busy');
+  say($('mintMsg'), 'Checking your wallet…'); // fresh pin check on every press; an old answer never sticks
   try {
     const r = await S.mint({ channel, videos: list, key: key(), onStatus: (t) => say($('mintMsg'), t) });
     picked.clear();
@@ -273,7 +288,7 @@ function checklist() {
     ['Use your own domain', false],
     ['Link YouTube with Google', ytLive],
     ['See every public video on your channel', true],
-    [`Mint one video, or pick a few (first ${S.LIVE_LIMIT} while we test)`, true],
+    ['Mint one video, a few, or all of them', true],
     ['Mint the whole channel in one go', false],
     ['Video walkthrough for YouTube settings', false],
   ];
@@ -282,6 +297,7 @@ function checklist() {
 
 document.addEventListener('bvideox-wallet', (e) => {
   const k = e.detail?.identityKey || null;
+  say($('mintMsg'), ''); // an old "needs an update" answer belongs to the old connection
   // Connected on the gate, or the wallet changed: reopen the studio for whoever is signed in now.
   if (!P && k) location.reload();
   else if (P?.isOwner && k !== st.identityKey) location.assign(uname ? location.pathname : '/studio');
@@ -289,10 +305,10 @@ document.addEventListener('bvideox-wallet', (e) => {
 });
 
 // ── modals: every step opens over the studio; one at a time ───────────────────
-const MODALS = ['youtube', 'videos', 'account', 'status'];
+const MODALS = ['youtube', 'account', 'status'];
 function openModal(id) {
+  if (id === 'videos') { if (!yt) id = 'youtube'; else { $('videos').hidden = false; $('videos').scrollIntoView({ behavior: 'smooth' }); return; } }
   if (!MODALS.includes(id)) return;
-  if (id === 'videos' && !yt) id = 'youtube';
   if (!P?.isOwner && id !== 'status') return;
   MODALS.forEach((m) => { const d = $(m); if (d.open && m !== id) d.close(); });
   const d = $(id); if (!d.open) d.showModal();

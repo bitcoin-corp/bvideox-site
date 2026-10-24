@@ -49,7 +49,7 @@
 <body>
 <header class="wrap nav">
   <a class="brand" href="/"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a>
-  <nav class="nav-links" aria-label="Main"><a id="backLink" href="/">Back to channel</a></nav>
+  <nav class="nav-links" aria-label="Main"><a class="hide-s" id="backLink" href="/">Back to channel</a><a href="/browse">Browse</a><span data-bwx></span></nav>
 </header>
 <main class="wrap">
   <p class="testbar" id="testbar" hidden>Test copy — claiming and minting run on <a href="https://bvideox.com">bvideox.com</a>.</p>
@@ -72,10 +72,12 @@
         <div class="mrow"><button class="btn btn-ghost" id="mintAll" type="button">Select all</button><span class="mute" id="mintQuote"></span></div>
         <div class="mlist" id="mintList"></div>
         <div class="mrow"><button class="btn btn-ghost" id="dryBtn" type="button" disabled>Dry run (nothing sent)</button><button class="btn btn-gold" id="liveBtn" type="button" disabled>Mint</button></div>
+        <p class="err" id="mintErr" role="alert" hidden></p>
         <p class="mute" id="mintGate"></p>
         <p class="ok" id="mintMsg" aria-live="polite"></p>
         <details><summary class="mute" style="cursor:pointer">What minting does</summary><ul class="caveats">
-          <li>Your wallet asks once to lock records with your keys, then once per batch of 25 to pay.</li>
+          <li>One approval in your wallet per batch of 25: it says what will be minted and what it costs, covering the lock and the payment together.</li>
+          <li>"Done" shows only once the network has the transaction.</li>
           <li>Anyone can see that a record exists, its size and when it was written. Not what's in it.</li>
           <li>It's permanent. If your 12 words leak, whoever has them can open every record.</li>
           <li>Your videos stay on YouTube. We never download or copy them.</li>

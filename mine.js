@@ -1,5 +1,5 @@
 /* "Your studio": once a bWalletX is connected, the header links to /studio (the wallet's own account page).
-   - Connecting on / or /claim opens /studio straight away (only on connect, never on a plain page load).
+   - Connecting from the navbar on any page opens /studio (done in bwx.js; never on a plain page load).
    - On a channel page they own (GET /v1/claims?identity_key=): "Your channel ✓" and the Mint (owner) button.
    If the endpoint isn't there yet (404, network error, odd JSON) nothing happens. */
 (() => {
@@ -18,7 +18,6 @@
   const label = (c) => c.slug ? '@' + c.slug : c.channelId;
   const here = decodeURIComponent((location.pathname.match(/^\/c\/([^/]+)/) || [])[1] || '').toLowerCase();
   const owns = (c) => here && (here === (c.slug || '').toLowerCase() || here === c.channelId.toLowerCase());
-  const onLanding = /^\/(index(\.html)?)?$|^\/claim(\.html)?\/?$/.test(location.pathname);
   let slot = null, lastKey = null;
 
   async function lookup(key) {
@@ -39,8 +38,8 @@
       slot.innerHTML = `<a href="${href(mine)}" title="You claimed this channel with your bWalletX">Your channel ✓</a>`;
       const mb = document.getElementById('mintBtn');
       if (mb) { mb.textContent = 'Mint (owner)'; mb.className = 'btn btn-gold'; mb.removeAttribute('aria-disabled'); mb.href = '/studio#videos'; }
-    } else slot.innerHTML = '<a href="/studio">Your studio</a>';
-    nav.prepend(slot);
+      nav.prepend(slot);
+    } // otherwise the header's "$handle" button already links to /studio
   }
 
   async function run(key, justConnected) {
@@ -50,7 +49,6 @@
     const list = await lookup(key.toLowerCase());
     if (key !== lastKey) return;
     paint(list);
-    if (justConnected && onLanding) location.assign('/studio');
   }
 
   document.addEventListener('bvideox-wallet', (e) => run(e.detail?.identityKey, !e.detail?.restored));

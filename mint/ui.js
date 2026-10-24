@@ -1,5 +1,5 @@
 // Step 5 on /c/<slug>/claim: mint private video records. Only the identity the channel is claimed to can mint.
-// Safety: LIVE + LIVE_LIMIT cap real writes (owner's first test = 3 videos). Real writes also need the wallet to pin
+// LIVE gates real writes; LIVE_LIMIT is no longer a cap (owner 24 Oct: users mint what they want). Real writes also need the wallet to pin
 // [2,'bvideox records'] to bvideox.com (getVersion().pinnedProtocols >= PIN_VERSION) and the premium payee set on
 // the server. Any check failing = the page refuses to write. Dry run is always available and sends nothing.
 import * as R from './records.js';
@@ -17,6 +17,9 @@ const loadCfg = () => cfgFor(ch.channelId);
 async function pins(w) { const p = await pinCheck(w); walletSeen = p.seen; return p.ok; }
 /** Why a real write is refused right now, or null. */
 const liveBlock = () => blockFor({ cfg, key, walletKey, pinned, seen: walletSeen, doneCount: Object.keys(done()).length });
+// The pin check is re-run on every Mint press and on reconnect, so the button never stays disabled by an old answer:
+// paint() gates on everything except the pin; a failed pin shows next to the button until the next check passes.
+const paintBlock = () => blockFor({ cfg, key, walletKey, pinned: null, seen: '', doneCount: Object.keys(done()).length });
 const selection = () => videos.filter((v) => picked.has(v.id) && !done()[v.id]);
 
 async function paint() {
@@ -27,7 +30,7 @@ async function paint() {
   if (!mine) return;
   const d = done();
   $('mintList').innerHTML = videos.map((v) => `<label class="mv${d[v.id] ? ' minted' : ''}"><input type="checkbox" data-id="${esc(v.id)}"${picked.has(v.id) || d[v.id] ? ' checked' : ''}${d[v.id] ? ' disabled' : ''}><span>${esc(v.title || v.id)}</span>${d[v.id] ? '<em>Minted</em>' : ''}</label>`).join('');
-  const sel = selection(), block = liveBlock();
+  const sel = selection(), block = paintBlock();
   const liveN = Math.min(sel.length, Math.max(0, LIVE_LIMIT - Object.keys(d).length));
   if (cfg && sel.length) {
     const p = await R.plan(ch, sel, cfg);
@@ -40,13 +43,17 @@ async function paint() {
   $('mintBadge').className = 'badge ' + (block ? 'coming' : 'live'); $('mintBadge').textContent = block ? 'Dry run' : 'Live';
 }
 
+/** Errors go inside the modal, next to the Mint button (never a browser dialog). */
+function showErr(t) { const el = $('mintErr'); if (!el) return; el.textContent = t || ''; el.hidden = !t; }
+
 async function run(dryRun) {
   if (busy) return;
-  const msg = $('mintMsg'); busy = true; paint();
+  const msg = $('mintMsg'); busy = true; showErr(''); paint();
   try {
     const w = await window.bvxWallet();
     walletKey = (await w.getPublicKey({ identityKey: true })).publicKey;
     pinned = await pins(w);
+    if (pinned) showErr('');
     if (!dryRun) {
       cfg = await loadCfg();
       const b = liveBlock(); if (b) throw new Error(b);
@@ -60,10 +67,12 @@ async function run(dryRun) {
     if (!dryRun && !payeeScript) throw new Error('No payee set.');
     let n = 0;
     const dry = [];
-    msg.textContent = 'Check your wallet: it asks once to lock your records with your keys' + (dryRun ? '.' : ', then once per batch to pay.');
+    msg.textContent = dryRun ? 'Check your wallet: it encrypts your records with your keys. Nothing is sent.'
+      : `Check your wallet: one approval, "Mint ${videosN(sel.length)}, locked to you on bvideox.com", covers locking and paying.`;
     await R.runMint({
       wallet: w, channel: ch, videos: sel, dryRun, perTx: cfg.perTx || R.PER_TX, payeeScript, premiumSatsPerItem: p.premiumSatsPerItem,
       done: dryRun ? {} : done(),
+      onChecking: () => { msg.textContent = 'Approved. Checking the network has it…'; },
       onBatch: (es) => {
         n += es.length;
         if (dryRun) dry.push(...es);
@@ -78,7 +87,8 @@ async function run(dryRun) {
     picked.clear();
     await readBack(w);
   } catch (e) {
-    msg.textContent = friendly(e);
+    msg.textContent = '';
+    showErr(friendly(e));
   }
   busy = false; paint();
 }
@@ -169,4 +179,11 @@ export async function initMint(channel, list, identityKey) {
   paint();
   if (location.hash === '#mint') $('s4').scrollIntoView({ behavior: 'smooth' });
 }
-export const setKey = (k) => { key = k; if (ch) paint(); };
+export const setKey = (k) => { if (k === key) { if (ch) paint(); return; } key = k; pinned = null; walletKey = null; walletSeen = ''; showErr(''); if (ch) paint(); };
+// Wallet reconnected (or switched): forget the old pin answer and check the new wallet straight away.
+document.addEventListener('bvideox-wallet', async (e) => {
+  pinned = null; walletKey = null; showErr('');
+  if (!e.detail?.identityKey || !ch) { if (ch) paint(); return; }
+  try { const w = await window.bvxWallet(); pinned = await pins(w); if (pinned === false) showErr(liveBlock() || ''); } catch {}
+  paint();
+});
