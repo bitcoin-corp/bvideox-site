@@ -110,7 +110,7 @@
     const mine = !!(claim?.claimed && key && claim.identityKey === key);
     const v = !!verified || mine;
     $('s1').classList.toggle('done', v); $('s3').classList.toggle('done', mine);
-    $('googleBtn').hidden = v;
+    $('googleBtn').hidden = v || (TEST && !on);
     if (v) {
       $('s1Txt').hidden = true; $('s2Txt').hidden = false;
       $('s2Txt').textContent = `✓ Verified: you own ${ownName()} on YouTube` + (verified?.email ? ` (${verified.email})` : '') + '.';
