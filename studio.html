@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your studio · bVideoX</title>
+<meta name="description" content="Your bVideoX studio: your name, your YouTube channel and every video, ready to mint one at a time or all at once.">
+<meta name="robots" content="noindex,follow">
+<meta property="og:type" content="website"><meta property="og:site_name" content="bVideoX">
+<meta property="og:title" content="Your studio · bVideoX"><meta property="og:description" content="Your name, your channel, every video. Mint one, or the lot.">
+<meta property="og:image" content="https://bvideox.com/og-bvideox-v1.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://bvideox.com/og-bvideox-v1.png">
+<meta name="theme-color" content="#000000"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/c/site.css">
+<style>
+main{padding-bottom:40px}
+.btn{gap:8px;transition:transform .12s ease,border-color .12s,opacity .12s}
+.btn:hover{border-color:var(--gold)}.btn:active{transform:scale(.98)}
+.btn:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn:disabled,.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed;transform:none}
+.btn.busy{opacity:.75;cursor:progress}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:18px}
+.panel h2{font-size:clamp(22px,3vw,28px);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.panel>p{color:#cfcabd;margin:0 0 14px;max-width:680px}
+.me{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;padding:30px 0 6px}
+.av{width:84px;height:84px;border-radius:50%;background:#111 center/cover;border:2px solid var(--gold);flex:none}
+.me h1{font-size:clamp(30px,6vw,52px);overflow-wrap:anywhere}
+.handle{font:600 18px 'Space Grotesk';color:var(--gold);margin:6px 0 0;overflow-wrap:anywhere}
+.mail{color:var(--mute);font-size:15px;margin:2px 0 0;overflow-wrap:anywhere}
+.link{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:14px}
+.link code{font:500 14px 'IBM Plex Sans';color:var(--ink);background:#000;border:1px solid var(--line);border-radius:999px;padding:6px 12px;overflow-wrap:anywhere}
+.chip{background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 12px;font:600 13px 'Space Grotesk';cursor:pointer}.chip:hover{border-color:var(--gold)}
+.steps3{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.steps3 li{border:1px solid var(--line);border-radius:16px;padding:14px 16px;background:#070708;display:flex;gap:12px;align-items:center;min-width:0}
+.steps3 .n{width:30px;height:30px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:700 14px 'Space Grotesk';flex:none}
+.steps3 li.done .n{background:var(--gold);color:#000}
+.steps3 b{display:block;font:600 15px 'Space Grotesk'}.steps3 span.s{font-size:13px;color:var(--mute);overflow-wrap:anywhere}
+.steps3 a{text-decoration:none;display:flex;gap:12px;align-items:center;min-width:0;color:inherit;width:100%}
+@media(max-width:760px){.steps3{grid-template-columns:1fr}.me{grid-template-columns:1fr}.av{width:72px;height:72px}}
+.msg{font-size:15px;margin:12px 0 0;min-height:1px}.msg.ok{color:var(--gold)}.msg.bad{color:#ff8a7a}
+.help{border:1px solid rgba(255,210,77,.35);border-radius:16px;padding:16px 18px;background:#0d0c08;margin-top:14px}
+.help h3{font:700 18px 'Space Grotesk';margin:0 0 8px}.help ol{margin:0;padding-left:20px;color:#d8d3c5}.help li{margin:4px 0}
+.walk{margin-top:14px;aspect-ratio:16/9;max-width:520px;border:1px dashed rgba(255,210,77,.35);border-radius:14px;display:grid;place-items:center;text-align:center;color:var(--mute);font-size:14px;padding:12px}
+.walk b{display:block;color:var(--ink);font:600 16px 'Space Grotesk';margin-bottom:6px}
+.chan{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.chan .av{width:52px;height:52px}
+.tools{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 0;background:linear-gradient(0deg,#000 70%,rgba(0,0,0,0))}
+.tools .q{flex:1 1 220px;font-size:14px;color:#cfcabd;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:6px}
+.v{background:#070708;border:1px solid #1d1d1d;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0;position:relative}
+.v.sel{border-color:var(--gold)}.v.minted{border-color:rgba(255,210,77,.5)}
+.v .th{aspect-ratio:16/9;background:#111 center/cover;position:relative;display:block}
+.v .pick{position:absolute;left:8px;top:8px;width:32px;height:32px;border-radius:10px;background:rgba(0,0,0,.7);display:grid;place-items:center;cursor:pointer}
+.v .pick input{width:20px;height:20px;accent-color:#ffd24d;cursor:pointer;margin:0}
+.v .seal{position:absolute;right:8px;top:8px;font:700 10px 'Space Grotesk';letter-spacing:.1em;background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#e0a800);color:#000;border-radius:99px;padding:3px 8px}
+.v .meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.v .t{font:600 14px 'Space Grotesk';display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.v .d{font-size:12px;color:var(--mute)}
+.v .btn{min-height:40px;padding:0 14px;font-size:14px;margin-top:auto}
+.empty{color:var(--mute);padding:20px 0}
+.skel{background:linear-gradient(90deg,#0b0b0c,#141414,#0b0b0c);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:16px;aspect-ratio:16/12}
+@keyframes sk{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.skel{animation:none}}
+.field{display:flex;gap:8px;flex-wrap:wrap;align-items:center;max-width:620px}
+.field .pre{color:var(--mute);font-size:15px}
+.field input{flex:1 1 200px;min-width:0;min-height:46px;border-radius:999px;border:1px solid rgba(255,210,77,.35);background:#000;color:var(--ink);padding:0 16px;font:500 16px 'IBM Plex Sans'}
+.field input[aria-invalid=true]{border-color:#ff8a7a}
+.hint{font-size:13px;color:var(--mute);margin:8px 0 0}
+.dns{font:500 13px ui-monospace,Menlo,monospace;background:#000;border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:#d8d3c5;overflow-wrap:anywhere;margin:10px 0 0;max-width:620px}
+.check{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.check li{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding:10px 0;font-size:15px}
+.check li:first-child{border-top:0}
+.center{text-align:center;max-width:620px;margin:60px auto 0}
+.center .lede{color:#d8d3c5;font-size:18px;margin:14px 0 24px}
+.center .steps3{text-align:left}
+.testbar{margin:18px 0 0;padding:12px 16px;border-radius:14px;background:var(--gold);color:#000;font-weight:600}.testbar a{color:#000}
+details summary{cursor:pointer;color:var(--gold);font:600 14px 'Space Grotesk';margin-top:10px}
+</style>
+</head>
+<body>
+<header class="wrap nav">
+  <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a>
+  <nav class="nav-links" aria-label="Main"><a class="hide-s" href="/">Home</a><span data-bwx></span></nav>
+</header>
+<main class="wrap">
+  <p class="testbar" id="testbar" hidden>Preview copy. Connecting your wallet and Google sign-in only work on <a href="https://bvideox.com/studio">bvideox.com</a>.</p>
+
+  <!-- Not signed in, at /studio -->
+  <section id="gate" class="center" hidden>
+    <p class="kicker">Your studio</p>
+    <h1>Connect your wallet to open your studio.</h1>
+    <p class="lede">Your studio carries your bWalletX name. Then link YouTube and mint your videos.</p>
+    <span data-bwx></span>
+    <ol class="steps3" aria-label="Three steps">
+      <li><span class="n">1</span><div><b>Connect bWalletX</b><span class="s">Opens your studio</span></div></li>
+      <li><span class="n">2</span><div><b>Link YouTube</b><span class="s">See every video</span></div></li>
+      <li><span class="n">3</span><div><b>Mint</b><span class="s">One, or the lot</span></div></li>
+    </ol>
+    <p class="hint" style="margin-top:18px">No wallet yet? <a class="gold" href="https://bwalletx.com/get">Get bWalletX</a>. It’s free.</p>
+  </section>
+
+  <!-- /u/<name> with no studio -->
+  <section id="nf" class="center" hidden>
+    <p class="kicker">Studio</p>
+    <h1 id="nfTitle">No studio here yet.</h1>
+    <p class="lede">Nobody has this name on bVideoX. If it’s yours, connect your wallet and open your studio.</p>
+    <a class="btn btn-gold" href="/studio">Open my studio</a>
+  </section>
+
+  <section id="loading" class="center"><p class="mute">Opening the studio…</p></section>
+
+  <section id="studio" hidden>
+    <div class="me">
+      <div class="av" id="av" role="img" aria-label=""></div>
+      <div style="min-width:0">
+        <p class="kicker" id="kick">Studio</p>
+        <h1 id="name"></h1>
+        <p class="handle" id="handle"></p>
+        <p class="mail" id="mail"></p>
+        <div class="link" id="linkRow" hidden><code id="pubLink"></code><button class="chip" type="button" id="copyLink">Copy link</button></div>
+      </div>
+    </div>
+
+    <ol class="steps3" id="owner3" hidden aria-label="Your three steps">
+      <li id="st1" class="done"><a href="#account"><span class="n">1</span><div><b>Wallet connected</b><span class="s" id="st1s"></span></div></a></li>
+      <li id="st2"><a href="#youtube"><span class="n">2</span><div><b>Link YouTube</b><span class="s" id="st2s">Not linked yet</span></div></a></li>
+      <li id="st3"><a href="#videos"><span class="n">3</span><div><b>Mint videos</b><span class="s" id="st3s">After linking</span></div></a></li>
+    </ol>
+
+    <!-- YouTube -->
+    <section class="panel" id="youtube" aria-labelledby="ytH">
+      <h2 id="ytH">YouTube <span class="badge" id="ytBadge"></span></h2>
+      <div id="ytBody"></div>
+      <div class="help" id="ytHelp" hidden></div>
+      <p class="msg" id="ytMsg" aria-live="polite"></p>
+    </section>
+
+    <!-- Videos -->
+    <section class="panel" id="videos" aria-labelledby="vH">
+      <h2 id="vH">Your videos <span class="badge live" id="vBadge">Live</span></h2>
+      <p id="vLede">Link YouTube to see every video you’ve posted here.</p>
+      <div class="tools" id="tools" hidden>
+        <button class="btn btn-ghost" type="button" id="selAll">Select all</button>
+        <button class="btn btn-gold" type="button" id="mintSel" disabled>Mint selected</button>
+        <span class="q" id="quote" aria-live="polite"></span>
+      </div>
+      <p class="msg" id="mintMsg" aria-live="polite"></p>
+      <div class="grid" id="grid"></div>
+      <ul class="caveats" id="caveats" hidden style="color:var(--mute);font-size:13px;padding-left:18px;margin:16px 0 0">
+        <li>Each record keeps the title, description, date and link, locked with your wallet’s keys. Only you can open it. You can make any one public later.</li>
+        <li>1p per video plus a small network fee, shown before you mint. Your wallet asks before anything is paid.</li>
+        <li>Your videos stay on YouTube. We never download or copy them.</li>
+      </ul>
+    </section>
+
+    <!-- Account -->
+    <section class="panel" id="account" aria-labelledby="aH" hidden>
+      <h2 id="aH">Your studio link <span class="badge" id="uBadge"></span></h2>
+      <p>Your studio starts with your bWalletX name. Pick another username if you like. Your wallet signs the change, so only you can make it.</p>
+      <form class="field" id="uForm" novalidate>
+        <span class="pre">bvideox.com/u/</span><input id="uIn" name="username" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="30" aria-label="Username" aria-describedby="uHint">
+        <button class="btn btn-gold" id="uSave" type="submit">Save</button>
+      </form>
+      <p class="hint" id="uHint">3 to 30 letters, numbers, - or _. Names must be unique.</p>
+      <p class="msg" id="uMsg" aria-live="polite"></p>
+
+      <h2 style="margin-top:28px">Your own domain <span class="badge coming">Coming</span></h2>
+      <p>Show your studio on a domain you own, like <b>videos.yourname.com</b>.</p>
+      <form class="field" id="dForm" novalidate>
+        <input id="dIn" name="domain" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="253" placeholder="videos.yourname.com" aria-label="Your domain">
+        <button class="btn btn-ghost" id="dSave" type="submit">Save domain</button>
+      </form>
+      <p class="msg" id="dMsg" aria-live="polite"></p>
+      <details>
+        <summary>How to point your domain</summary>
+        <p class="hint">At the company where you bought the domain, add one DNS record:</p>
+        <div class="dns">Subdomain (videos.yourname.com):<br>CNAME &nbsp;videos &nbsp;→ &nbsp;cname.vercel-dns.com<br><br>Whole domain (yourname.com):<br>A &nbsp;@ &nbsp;→ &nbsp;76.76.21.21</div>
+        <p class="hint">DNS can take up to a day to update. Then we connect it to your studio. That last step is coming soon, so your domain won’t show your studio yet.</p>
+      </details>
+      <ul class="check" style="margin-top:14px" aria-label="Domain status">
+        <li><span>Save your domain to your studio</span><span class="badge" id="dB1"></span></li>
+        <li><span>Point your DNS (you do this)</span><span class="badge live">Live</span></li>
+        <li><span>We connect it to your studio</span><span class="badge coming">Coming</span></li>
+      </ul>
+    </section>
+
+    <!-- Public view: channels -->
+    <section class="panel" id="pub" hidden>
+      <h2>Channels</h2>
+      <div id="pubList"></div>
+    </section>
+
+    <section class="panel" id="status" aria-labelledby="sH">
+      <h2 id="sH">What works today</h2>
+      <ul class="check" id="checklist"></ul>
+    </section>
+  </section>
+</main>
+<footer>bVideoX · part of the bWalletX family · <a href="https://bwalletx.com/get">Get bWalletX</a></footer>
+<script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/bwx.js"></script>
+<script type="module" src="/studio.js"></script>
+</body>
+</html>
