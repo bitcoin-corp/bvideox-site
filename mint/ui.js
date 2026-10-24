@@ -3,61 +3,20 @@
 // [2,'bvideox records'] to bvideox.com (getVersion().pinnedProtocols >= PIN_VERSION) and the premium payee set on
 // the server. Any check failing = the page refuses to write. Dry run is always available and sends nothing.
 import * as R from './records.js';
-
-const LIVE = true;
-const LIVE_LIMIT = 3;
+import { LIVE, LIVE_LIMIT, esc, ls, videosN, txN, money, doneKey as dk, loadCfg as cfgFor, pinCheck, liveBlock as blockFor, friendly } from './core.js';
 
 const $ = (id) => document.getElementById(id);
-const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const ls = {
-  get: (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-};
-const videosN = (n) => `${n} video${n === 1 ? '' : 's'}`;
-const txN = (n) => `${n} transaction${n === 1 ? '' : 's'}`;
-const money = (sats, cfg) => {
-  if (!cfg.usdPerBsv) return `${sats.toLocaleString()} sats`;
-  const usd = (sats / 1e8) * cfg.usdPerBsv, gbp = cfg.usdPerGbp ? usd / cfg.usdPerGbp : null;
-  if (gbp == null) return usd < 0.001 ? 'under $0.001' : `$${usd.toFixed(3)}`;
-  const p = gbp * 100;
-  return p < 0.1 ? 'under 0.1p' : p < 10 ? `${p.toFixed(1).replace(/\.0$/, '')}p` : p < 100 ? `${Math.round(p)}p` : `£${gbp.toFixed(2)}`;
-};
 
 let ch = null, videos = [], key = null, cfg = null, pinned = null, walletKey = null, busy = false, walletSeen = '';
 const picked = new Set();
-const doneKey = () => `bvx-mint-${ch.channelId}-${key}`;
+const doneKey = () => dk(ch.channelId, key);
 const dryKey = () => `bvx-dry-${ch.channelId}`;
 const done = () => ls.get(doneKey()) || {};
 
-/** Fresh config + live rates. Null (no quote, no writes) when either rate is missing. */
-async function loadCfg() {
-  const c = await fetch('/api/mint/config?channel_id=' + encodeURIComponent(ch.channelId), { cache: 'no-store' }).then((r) => r.json()).catch(() => null);
-  if (!c || !c.usdPerBsv || !c.usdPerGbp) return null;
-  return { ...c, gbpPerItem: c.premiumGbpPerItem, satPerKb: c.feeSatPerKb };
-}
-async function pins(w) {
-  try {
-    const v = await w.getVersion({});
-    // Pin level from the field, or from a `+pN` version suffix (bwallet #64: the connect binary wire carries only `version`).
-    const m = v && typeof v.version === 'string' ? v.version.match(/\+p(\d+)\b/) : null;
-    const lock = Math.max(Number(v && v.pinnedProtocols) || 0, m ? Number(m[1]) : 0);
-    walletSeen = `${(v && v.version) || 'unknown version'}${lock ? `, lock v${lock}` : ', no lock'}`;
-    return lock >= R.PIN_VERSION;
-  } catch (e) { walletSeen = `no answer (${(e && e.message) || 'error'})`; return false; }
-}
-
+const loadCfg = () => cfgFor(ch.channelId);
+async function pins(w) { const p = await pinCheck(w); walletSeen = p.seen; return p.ok; }
 /** Why a real write is refused right now, or null. */
-function liveBlock() {
-  if (!LIVE) return 'Real minting is off. Dry run only.';
-  if (!cfg) return 'Prices are still loading.';
-  if (!cfg.claim) return "We couldn't check the claim just now. Try again in a minute.";
-  if (!cfg.claim.claimed || cfg.claim.identityKey !== key) return 'Only the bWalletX this channel is claimed to can mint.';
-  if (walletKey && walletKey !== key) return 'The wallet in this browser is a different identity from the one signed in. Reconnect bWalletX.';
-  if (pinned === false) return `Your bWalletX needs an update that keeps these records locked to bvideox.com (the connected wallet reports: ${walletSeen}). Reload your wallet, or use web.bwalletx.com, then reconnect.`;
-  if (!cfg.payee) return 'Real minting opens shortly (payments are being set up). Dry run works now.';
-  if (Object.keys(done()).length >= LIVE_LIMIT) return `Test run done: ${LIVE_LIMIT} videos minted. The rest open after we check them.`;
-  return null;
-}
+const liveBlock = () => blockFor({ cfg, key, walletKey, pinned, seen: walletSeen, doneCount: Object.keys(done()).length });
 const selection = () => videos.filter((v) => picked.has(v.id) && !done()[v.id]);
 
 async function paint() {
@@ -119,9 +78,7 @@ async function run(dryRun) {
     picked.clear();
     await readBack(w);
   } catch (e) {
-    msg.textContent = /denied|declin|reject|cancel|permission/i.test(String(e?.message)) ? 'Your wallet said no, so nothing was written. Try again when you’re ready.'
-      : e?.code === 'NOT_FOUND' ? 'Your wallet is not connected in this browser any more. Press Connect bWalletX, then try again.'
-      : (e?.message || 'It stopped. Try again: it carries on from the last saved batch.');
+    msg.textContent = friendly(e);
   }
   busy = false; paint();
 }

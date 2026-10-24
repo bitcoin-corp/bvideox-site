@@ -64,6 +64,13 @@ section{padding:88px 0;border-bottom:1px solid var(--line)}
 .hero::before{content:"";position:absolute;right:-220px;top:-200px;width:760px;height:760px;background:radial-gradient(circle,rgba(255,95,87,.13),transparent 60%);pointer-events:none}
 .hero .wrap{position:relative}
 .ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.go{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:760px}
+.go li{background:rgba(11,11,12,.82);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(6px)}
+.go-n{width:28px;height:28px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font:700 14px 'Space Grotesk'}
+.go-t{font:600 16px 'Space Grotesk';color:var(--ink)}
+.go .btn,.go .bwx-btn{width:100%;min-height:48px;justify-content:center}
+.go .btn:focus-visible,.go .bwx-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media(max-width:760px){.go{grid-template-columns:1fr}.go li{flex-direction:row;align-items:center;flex-wrap:wrap}.go-t{flex:1 1 auto}.go li>:last-child{flex:1 1 100%}}
 .small{font-size:13px;color:var(--mute)}
 /* the strip: a channel's videos roll past, and each gets minted */
 .strip{margin-top:40px;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
@@ -93,11 +100,9 @@ section{padding:88px 0;border-bottom:1px solid var(--line)}
 .price div{background:#000;border:1px solid #222;border-radius:14px;padding:14px}
 .price b{display:block;font:700 22px 'Space Grotesk';color:var(--gold)}
 .price span{font-size:13px;color:var(--mute)}
-#me{display:none}#me.show{display:block}
-.key{font:500 13px ui-monospace,Menlo,monospace;color:#cfcabd;background:#0b0b0c;border:1px solid var(--line);border-radius:10px;padding:10px 12px;word-break:break-all;margin-top:16px}
 footer{padding:40px 0;color:var(--mute);font-size:13px}
-.bwx-btn{border-color:rgba(255,95,87,.5)!important;color:var(--red)!important}
-.bwx-btn.on{background:linear-gradient(180deg,#ff9a94,#ff5f57 60%,#d93a33)!important;color:#1a0302!important}
+.bwx-btn{border-color:rgba(255,210,77,.5)!important;color:var(--gold)!important}
+.bwx-btn.on{background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#e0a800)!important;color:#000!important;text-decoration:none}
 </style>
 </head>
 <body>
@@ -129,7 +134,12 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
       <p class="eyebrow">YouTube → bVideoX · part of FLICK OFF</p>
       <h1>Your channel.<br><em>Owned</em> by you.</h1>
       <p class="lede">You made every one of those videos. Bring them to Bitcoin with their original upload dates, signed by you and kept in your own wallet. No strikes, no takedowns, no one switching off your income.</p>
-      <div class="ctas"><span data-bwx></span><a class="btn btn-ghost" href="https://bmintx.com/flick-off/youtube">Bring my channel</a></div>
+      <ol class="go" aria-label="Three steps">
+        <li><span class="go-n">1</span><span class="go-t">Connect your wallet</span><span data-bwx="studio"></span></li>
+        <li><span class="go-n">2</span><span class="go-t">Link your YouTube</span><a class="btn btn-ghost" href="/studio#youtube">Link YouTube</a></li>
+        <li><span class="go-n">3</span><span class="go-t">Mint your videos</span><a class="btn btn-red" href="/studio#videos">Mint videos</a></li>
+      </ol>
+      <p class="small" style="margin:14px 0 0">One at a time or the whole channel. Your videos stay on YouTube.</p>
     </div>
     <div class="hero-icon" aria-hidden="true">
       <svg viewBox="0 0 200 200" width="100%" height="100%">
@@ -162,23 +172,14 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   </div>
 </section>
 
-<section id="me" aria-live="polite">
-  <div class="wrap">
-    <p class="kicker">You’re connected</p>
-    <h2>Your wallet is ready for your channel.</h2>
-    <div class="key" id="meKey"></div>
-    <p class="lede" style="margin-top:20px">Next: request your YouTube export from Google Takeout. When it arrives, drop it here and pick which videos to bring. The channel importer is on its way.</p>
-  </div>
-</section>
-
 <section id="how">
   <div class="wrap">
     <p class="kicker">How it works</p>
-    <h2>Takeout. Pick. Own it.</h2>
+    <h2>Connect. Link. Mint.</h2>
     <div class="three">
-      <div class="card"><b class="n">1</b><h3>Export from Google</h3><p>Go to Google Takeout, choose <b>YouTube and YouTube Music</b>, and ask for your videos. Google emails you the files.</p></div>
-      <div class="card"><b class="n">2</b><h3>Pick your videos</h3><p>We read the export in your browser and price each video before anything happens. Bring the whole channel, or just the ones that matter.</p></div>
-      <div class="card"><b class="n">3</b><h3>Flick the switch</h3><p>Your wallet signs each one and it’s written to Bitcoin in your name, with its title, description and original upload date.</p></div>
+      <div class="card"><b class="n">1</b><h3>Connect bWalletX</h3><p>Your studio opens with your own name, like <b>$yourname</b>. Pick a username for your link, and later your own domain.</p></div>
+      <div class="card"><b class="n">2</b><h3>Link YouTube</h3><p>Sign in with Google. We read your channel once, read-only, and show every video you’ve posted.</p></div>
+      <div class="card"><b class="n">3</b><h3>Mint what matters</h3><p>Mint one video, a few, or the whole channel. Each record keeps its title, description and original upload date, signed by you.</p></div>
     </div>
   </div>
 </section>
@@ -227,9 +228,6 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
     let k = 0;
     setInterval(() => { const i = k % V.length; vids[i].classList.add('minted'); vids[i + V.length].classList.add('minted'); if (++k % (V.length + 3) === 0) { vids.forEach((v) => v.classList.remove('minted')); k = 0; } }, 1100);
   } else vids.forEach((v) => v.classList.add('minted'));
-  const showMe = (key) => { const s = document.getElementById('me'); if (!key) return s.classList.remove('show'); document.getElementById('meKey').textContent = 'bWalletX identity · ' + key; s.classList.add('show'); };
-  document.addEventListener('bvideox-wallet', (e) => { showMe(e.detail.identityKey); document.getElementById('me').scrollIntoView({ behavior: 'smooth' }); });
-  fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => showMe(j.identityKey)).catch(() => {});
 })();
 </script>
 <script src="/mine.js" defer></script>
