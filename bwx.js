@@ -81,6 +81,7 @@
     await post('/api/bwalletx/session', {}).catch(() => {});
     try { C.clearPairing?.(); } catch {}
     key = null; wallet = null; draw();
+    document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: null } }));
   }
   fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => { key = j.identityKey || null; draw(); }).catch(draw);
   draw();
