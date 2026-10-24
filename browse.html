@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browse channels · bVideoX</title>
+<meta name="description" content="Browse the channels on bVideoX and their latest videos, played with YouTube's own player. No wallet needed to watch.">
+<link rel="canonical" href="https://bvideox.com/browse">
+<meta property="og:type" content="website"><meta property="og:url" content="https://bvideox.com/browse"><meta property="og:site_name" content="bVideoX">
+<meta property="og:title" content="Browse channels · bVideoX"><meta property="og:description" content="Channels on bVideoX and their latest videos. Watch without a wallet.">
+<meta property="og:image" content="https://bvideox.com/og-bvideox-v1.png?v=browse1"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Browse channels · bVideoX"><meta name="twitter:image" content="https://bvideox.com/og-bvideox-v1.png?v=browse1">
+<meta name="theme-color" content="#000000"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/c/site.css">
+<style>
+.hero{padding:34px 0 8px}
+.hero h1{font-size:clamp(34px,7vw,60px);margin-bottom:10px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:14px;margin:22px 0 40px}
+.ch{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line);text-decoration:none;transition:border-color .15s,transform .15s}
+.ch:hover,.ch:focus-visible{border-color:var(--gold);transform:translateY(-1px)}
+.ch .av{width:64px;height:64px;border-radius:50%;background:#1a1a1a center/cover;border:2px solid rgba(255,210,77,.5)}
+.ch b{display:block;font:700 18px/1.2 'Space Grotesk';overflow-wrap:anywhere}
+.ch .h{font-size:13px;color:var(--mute);overflow-wrap:anywhere}
+.ch .st{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pill{font:600 12px 'Space Grotesk';border-radius:999px;padding:2px 9px;border:1px solid rgba(154,150,139,.35);color:#cfcabd}
+.pill.g{border-color:rgba(255,210,77,.5);color:var(--gold)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:14px;margin:18px 0 10px}
+.v{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:var(--card);border:1px solid var(--line);text-decoration:none}
+.v:hover{border-color:var(--gold)}
+.v .th{aspect-ratio:16/9;background:#111 center/cover}
+.v .m{padding:10px 12px 12px;display:grid;gap:4px}
+.v .t{font:600 14px/1.35 'Space Grotesk';overflow-wrap:anywhere}
+.v .d{font-size:12px;color:var(--mute)}
+.state{color:var(--mute);padding:10px 0}
+</style>
+</head>
+<body>
+<header class="wrap nav">
+  <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" alt="" width="30" height="30"><span>bVideo<span class="gold">X</span></span></a>
+  <nav class="nav-links" aria-label="Main"><a class="hide-s" href="/">Home</a><a href="/browse" aria-current="page" class="gold">Browse</a><span data-bwx></span></nav>
+</header>
+<main class="wrap">
+  <section class="hero">
+    <p class="kicker">Browse <span class="badge live">Live</span></p>
+    <h1>Channels on bVideoX.</h1>
+    <p class="mute" style="max-width:620px;margin:0">Tap a channel to watch its videos. They play with YouTube's own player. No wallet needed to watch.</p>
+  </section>
+  <h2 style="margin-top:28px">Channels</h2>
+  <div class="cgrid" id="channels" aria-live="polite"></div>
+  <p class="state" id="cState">Loading channels…</p>
+  <h2>Recent videos</h2>
+  <div class="vgrid" id="recent"></div>
+  <p class="state" id="vState"></p>
+  <p class="mute" style="font-size:14px;margin-top:30px">Your channel here? <a class="gold" href="/claim">Find and claim it</a>.</p>
+</main>
+<footer>bVideoX · part of the bWalletX family · We don't host or download these videos. Each one plays from YouTube. · <a href="/">Home</a></footer>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const n = (x, one, many) => `${x} ${x === 1 ? one : many}`;
+  const day = (v) => v.published ? (v.dateExact ? '' : 'about ') + new Date(v.published).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const href = (slug) => '/c/' + encodeURIComponent(slug);
+  fetch('/api/browse').then((r) => r.ok ? r.json() : Promise.reject()).then((j) => {
+    const cs = j.channels || [];
+    $('channels').innerHTML = cs.map((c) => `<a class="ch" href="${href(c.slug)}">
+      <span class="av" role="img" aria-label="${esc(c.name)}"${c.avatar ? ` style="background-image:url('${esc(c.avatar)}')"` : ''}></span>
+      <span style="min-width:0"><b>${esc(c.name)}</b>${c.handle ? `<span class="h">${esc(c.handle)}</span>` : ''}
+      <span class="st">${c.videoCount != null ? `<span class="pill">${n(c.videoCount, 'video', 'videos')}</span>` : ''}${c.minted != null ? `<span class="pill g">${c.minted} minted</span>` : ''}<span class="pill${c.claimed ? ' g' : ''}">${c.claimed ? 'Claimed' : 'Unclaimed'}</span></span></span></a>`).join('');
+    $('cState').textContent = cs.length ? '' : 'No channels yet.';
+    $('cState').hidden = !!cs.length;
+    const vs = j.recent || [];
+    $('recent').innerHTML = vs.map((v) => `<a class="v" href="${href(v.slug)}" title="Watch on ${esc(v.channel)}'s page">
+      <span class="th" style="background-image:url('https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg')"></span>
+      <span class="m"><span class="t">${esc(v.title || v.id)}</span><span class="d">${esc(v.channel)}${day(v) ? ' · ' + esc(day(v)) : ''}</span></span></a>`).join('');
+    $('vState').textContent = vs.length ? '' : 'No recent videos to show just now.';
+  }).catch(() => { $('cState').textContent = 'Could not load channels. Try again shortly.'; });
+})();
+</script>
+<script src="https://unpkg.com/@bwalletx/connect@0.5.0/dist/bwalletx-connect.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/bwx.js"></script>
+</body>
+</html>

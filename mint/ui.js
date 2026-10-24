@@ -17,6 +17,9 @@ const loadCfg = () => cfgFor(ch.channelId);
 async function pins(w) { const p = await pinCheck(w); walletSeen = p.seen; return p.ok; }
 /** Why a real write is refused right now, or null. */
 const liveBlock = () => blockFor({ cfg, key, walletKey, pinned, seen: walletSeen, doneCount: Object.keys(done()).length });
+// The pin check is re-run on every Mint press and on reconnect, so the button never stays disabled by an old answer:
+// paint() gates on everything except the pin; a failed pin shows next to the button until the next check passes.
+const paintBlock = () => blockFor({ cfg, key, walletKey, pinned: null, seen: '', doneCount: Object.keys(done()).length });
 const selection = () => videos.filter((v) => picked.has(v.id) && !done()[v.id]);
 
 async function paint() {
@@ -27,7 +30,7 @@ async function paint() {
   if (!mine) return;
   const d = done();
   $('mintList').innerHTML = videos.map((v) => `<label class="mv${d[v.id] ? ' minted' : ''}"><input type="checkbox" data-id="${esc(v.id)}"${picked.has(v.id) || d[v.id] ? ' checked' : ''}${d[v.id] ? ' disabled' : ''}><span>${esc(v.title || v.id)}</span>${d[v.id] ? '<em>Minted</em>' : ''}</label>`).join('');
-  const sel = selection(), block = liveBlock();
+  const sel = selection(), block = paintBlock();
   const liveN = Math.min(sel.length, Math.max(0, LIVE_LIMIT - Object.keys(d).length));
   if (cfg && sel.length) {
     const p = await R.plan(ch, sel, cfg);
@@ -50,6 +53,7 @@ async function run(dryRun) {
     const w = await window.bvxWallet();
     walletKey = (await w.getPublicKey({ identityKey: true })).publicKey;
     pinned = await pins(w);
+    if (pinned) showErr('');
     if (!dryRun) {
       cfg = await loadCfg();
       const b = liveBlock(); if (b) throw new Error(b);
@@ -175,4 +179,11 @@ export async function initMint(channel, list, identityKey) {
   paint();
   if (location.hash === '#mint') $('s4').scrollIntoView({ behavior: 'smooth' });
 }
-export const setKey = (k) => { key = k; if (ch) paint(); };
+export const setKey = (k) => { if (k === key) { if (ch) paint(); return; } key = k; pinned = null; walletKey = null; walletSeen = ''; showErr(''); if (ch) paint(); };
+// Wallet reconnected (or switched): forget the old pin answer and check the new wallet straight away.
+document.addEventListener('bvideox-wallet', async (e) => {
+  pinned = null; walletKey = null; showErr('');
+  if (!e.detail?.identityKey || !ch) { if (ch) paint(); return; }
+  try { const w = await window.bvxWallet(); pinned = await pins(w); if (pinned === false) showErr(liveBlock() || ''); } catch {}
+  paint();
+});

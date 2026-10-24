@@ -202,6 +202,7 @@ async function mintThese(list) {
   if (busy || !list.length) return;
   busy = true; paintGrid(); paintTools();
   $('mintSel').classList.add('busy');
+  say($('mintMsg'), 'Checking your wallet…'); // fresh pin check on every press; an old answer never sticks
   try {
     const r = await S.mint({ channel, videos: list, key: key(), onStatus: (t) => say($('mintMsg'), t) });
     picked.clear();
@@ -282,6 +283,7 @@ function checklist() {
 
 document.addEventListener('bvideox-wallet', (e) => {
   const k = e.detail?.identityKey || null;
+  say($('mintMsg'), ''); // an old "needs an update" answer belongs to the old connection
   // Connected on the gate, or the wallet changed: reopen the studio for whoever is signed in now.
   if (!P && k) location.reload();
   else if (P?.isOwner && k !== st.identityKey) location.assign(uname ? location.pathname : '/studio');
