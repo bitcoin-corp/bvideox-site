@@ -93,7 +93,10 @@
     if (c.avatar) { $('av').style.backgroundImage = `url("${c.avatar}")`; $('av').setAttribute('aria-label', c.name); }
     $('facts').innerHTML = [c.handle && `<a href="${esc(c.url)}" rel="noopener" target="_blank">${esc(c.handle)} on YouTube ↗</a>`, c.status === 'claimed' ? 'Claimed' : 'Unclaimed', c.heldPaymail && (c.payable ? esc(c.heldPaymail) : `${esc(c.heldPaymail)} · held, not payable until claimed`)].filter(Boolean).map((x) => `<span>${x}</span>`).join('');
     $('belongs').textContent = `These videos belong to ${c.name}. Shown here with YouTube's player; views count on YouTube.`;
-    if (c.status !== 'claimed') {
+    if (c.status === 'claimed') {
+      $('claimbar').querySelector('.wrap').innerHTML = `<span><b>Claimed</b> · ${esc(c.name)} is linked to its owner's bWalletX${c.heldPaymail ? ` · ${esc(c.heldPaymail)} opens for payments soon` : ''}</span>`;
+      $('claimbar').hidden = false; $('mintBtn').textContent = 'Claimed';
+    } else {
       $('cbName').textContent = c.name; $('cbMail').textContent = c.heldPaymail ? ` (${c.heldPaymail} held)` : '';
       $('claimBtn').href = `/c/${encodeURIComponent(c.slug)}/claim?id=${encodeURIComponent(c.channelId)}`; $('claimbar').hidden = false;
       $('mintBtn').href = $('claimBtn').href;
