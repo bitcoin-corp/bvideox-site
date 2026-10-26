@@ -38,7 +38,7 @@ export async function pinCheck(w) {
   try {
     const v = await w.getVersion({});
     // Pin level from the field, or from a `+pN` version suffix (bwallet #64: the connect binary wire carries only `version`).
-    const m = v && typeof v.version === 'string' ? v.version.match(/\+p(\d+)\b/) : null;
+    const m = v && typeof v.version === 'string' ? v.version.match(/(?:\+p|; pin=)(\d+)\b/) : null;
     const lock = Math.max(Number(v && v.pinnedProtocols) || 0, m ? Number(m[1]) : 0);
     return { ok: lock >= R.PIN_VERSION, seen: `${(v && v.version) || 'unknown version'}${lock ? `, lock v${lock}` : ', no lock'}` };
   } catch (e) { return { ok: false, seen: `no answer (${(e && e.message) || 'error'})` }; }
