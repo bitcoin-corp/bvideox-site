@@ -18,7 +18,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://bvideox.com/og-bvideox-v2.png">
 <meta name="theme-color" content="#000000">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -105,16 +108,6 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .bwx-btn{border-color:rgba(255,210,77,.5)!important;color:var(--gold)!important}
 .bwx-btn.on{background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#e0a800)!important;color:#000!important;text-decoration:none}
 @media(prefers-reduced-motion:reduce){.cf-card{transition:none}}
-/* homepage consistency: bMoviesX-style hero (~60vh) on top, coverflow directly below, catalogue after */
-.top{padding:0;position:relative;min-height:max(440px,calc(60svh - 36px));display:flex;flex-direction:column;isolation:isolate;overflow:hidden;background:#000;border-bottom:1px solid var(--line)}
-.top>video,.top>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;z-index:-2}
-.top::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.75) 0,rgba(0,0,0,0) 26%),linear-gradient(0deg,#000 0,rgba(0,0,0,.85) 22%,rgba(0,0,0,.2) 65%,rgba(0,0,0,0) 100%),linear-gradient(90deg,rgba(0,0,0,.7) 0,rgba(0,0,0,0) 65%)}
-.top .nav{width:100%}
-.top-in{margin-top:auto;padding-bottom:40px;width:100%}
-.top-in h1{font-size:clamp(52px,7vw,104px);margin:0 0 10px}
-.top-in .lede{margin:0 0 22px;max-width:560px}
-.top-in .ctas .btn{min-width:150px}
-@media(max-width:640px){.top-in .ctas .btn{flex:1 1 100%}}
 .hero{padding:24px 0 40px}
 .hero .kicker{margin:0}
 .hero .cf{margin-top:14px}
@@ -123,40 +116,65 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .cat-head h2{font:700 clamp(40px,6vw,76px)/.95 'Space Grotesk';letter-spacing:-.04em;margin:0}
 .cat-head h2 span{color:var(--gold)}
 .cat-head .lede{margin:14px 0 0;color:var(--mute);font-size:17px}
-@media(prefers-reduced-motion:reduce){.top>video{display:none}}
 </style>
 </head>
 <body>
-<!-- Part of bWalletX strip (shared snippet, same on every bWalletX product site; source: bwalletx-site/brand/part-of-bwalletx.html) -->
 <style>
-.bwx-strip{background:#0a0a0b;border-bottom:1px solid rgba(255,210,77,.16);font:500 13px/1 'IBM Plex Sans',system-ui,-apple-system,sans-serif}
-.bwx-strip a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 16px;color:#cfcabd;text-decoration:none;letter-spacing:.01em}
-.bwx-strip svg{width:12px;height:16px;flex:none;display:block}
-.bwx-strip b{color:#ffd24d;font-weight:600}
-.bwx-strip .bwx-go{color:#7c7a73;transition:transform .16s cubic-bezier(.2,.8,.2,1),color .16s}
-.bwx-strip a:hover{color:#f4f1e8}
-.bwx-strip a:hover .bwx-go{color:#ffd24d;transform:translateX(2px)}
-.bwx-strip a:focus-visible{outline:2px solid #ffd24d;outline-offset:-4px;border-radius:8px}
-@media (prefers-reduced-motion:reduce){.bwx-strip .bwx-go{transition:none}}
+:root{--xs-acc:#FF6A13}
+/* b*X shared shell v1 (29 Oct 2026). Identical on bmoviesx.com, bvideox.com and bmusicx.com; only --xs-acc and the
+   hero art differ. Strip, header, hero, carousel heading and catalogue heading. The hero is capped (~44vh) and the
+   carousel card height is whatever is left of the first screen, so the first card is fully visible on load. */
+:root{--xs-hero:clamp(300px,44svh,460px);--xs-cfh:clamp(170px,calc(100svh - 36px - var(--xs-hero) - 84px),480px);--xs-ink:#f4f1e8;--xs-mute:#a9a69c;--xs-hf:'Space Grotesk',system-ui,-apple-system,sans-serif;--xs-bf:'IBM Plex Sans',system-ui,-apple-system,sans-serif}
+.xs-strip{background:#0a0a0b;border-bottom:1px solid rgba(255,210,77,.16);font:500 13px/1 var(--xs-bf);position:relative;z-index:5}
+.xs-strip a{display:flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;color:#cfcabd;text-decoration:none;letter-spacing:.01em}
+.xs-strip svg{width:12px;height:16px;flex:none;display:block}
+.xs-strip b{color:#ffd24d;font-weight:600}
+.xs-strip .xs-go{color:#7c7a73;transition:transform .16s cubic-bezier(.2,.8,.2,1),color .16s}
+.xs-strip a:hover{color:var(--xs-ink)}.xs-strip a:hover .xs-go{color:#ffd24d;transform:translateX(2px)}
+.xs-wrap{max-width:1160px;margin:0 auto;padding:0 20px;width:100%;box-sizing:border-box}
+@media(max-width:640px){.xs-wrap{padding:0 16px}}
+.xs-top{padding:0;margin:0;position:relative;min-height:var(--xs-hero);display:flex;flex-direction:column;isolation:isolate;overflow:hidden;background:#000;border-bottom:1px solid rgba(255,255,255,.08);box-sizing:border-box}
+.xs-top>video,.xs-top>.xs-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;z-index:-2;display:block;max-width:none}
+.xs-top::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.78) 0,rgba(0,0,0,0) 30%),linear-gradient(0deg,#000 0,rgba(0,0,0,.82) 26%,rgba(0,0,0,.2) 70%,rgba(0,0,0,0) 100%),linear-gradient(90deg,rgba(0,0,0,.72) 0,rgba(0,0,0,0) 66%)}
+.xs-nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:12px;position:relative;z-index:3}
+.xs-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--xs-ink);font:700 22px/1 var(--xs-hf);letter-spacing:-.02em;white-space:nowrap}
+.xs-brand svg{width:20px;height:27px;flex:none;display:block}
+.xs-brand i,.xs-h1 i,.xs-cat h2 i{font-style:normal;color:var(--xs-acc)}
+.xs-links{display:flex;gap:20px;align-items:center;font:500 14px/1 var(--xs-hf);min-width:0}
+.xs-links>a{color:#cfcabd;text-decoration:none;white-space:nowrap}
+.xs-links>a:hover{color:#fff}
+@media(max-width:720px){.xs-links .xs-hs{display:none}}
+.xs-in{margin-top:auto;padding-top:8px;padding-bottom:30px;position:relative;z-index:2}
+.xs-eye{font:600 12px/1 var(--xs-hf);letter-spacing:.18em;text-transform:uppercase;color:var(--xs-acc);margin:0 0 12px}
+.xs-h1{font:700 clamp(34px,4.4vw,62px)/1 var(--xs-hf);letter-spacing:-.04em;margin:0 0 12px;color:#fff;text-transform:none}
+.xs-lede{font:400 clamp(15px,1.35vw,18px)/1.5 var(--xs-bf);color:#d8d3c5;max-width:600px;margin:0 0 20px}
+.xs-ctas{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.xs-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;min-width:140px;padding:0 22px;border-radius:999px;font:600 15px/1 var(--xs-hf);letter-spacing:0;text-transform:none;text-decoration:none;border:0;cursor:pointer;box-sizing:border-box;white-space:nowrap}
+.xs-gold{background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#e0a800);color:#000!important}
+.xs-ghost{border:1px solid rgba(255,255,255,.24);color:var(--xs-ink)!important;background:rgba(0,0,0,.35)}
+.xs-ghost:hover{border-color:var(--xs-acc)}
+.xs-snd{position:absolute;right:20px;bottom:30px;z-index:3;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.26);background:rgba(0,0,0,.5);color:var(--xs-ink);font:600 13px/1 var(--xs-hf);cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.xs-snd[aria-pressed=true]{background:var(--xs-acc);border-color:var(--xs-acc);color:#fff}
+@media(max-width:640px){.xs-snd{top:72px;bottom:auto;right:16px;height:40px}.xs-in{padding-bottom:22px}.xs-btn{min-width:0;flex:1 1 0}}
+.xs-kick{display:block;text-align:center;font:600 12px/1 var(--xs-hf);letter-spacing:.18em;text-transform:uppercase;color:var(--xs-acc);margin:0}
+.xs-cfs{padding:16px 0 28px;text-align:center;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.08)}
+.xs-cat .xs-eye{margin-bottom:12px}
+.xs-cat h2{font:700 clamp(34px,4.8vw,60px)/.98 var(--xs-hf);letter-spacing:-.04em;margin:0;color:#fff;text-transform:none}
+.xs-cat p.xs-sub{color:var(--xs-mute);font:400 17px/1.5 var(--xs-bf);margin:12px 0 0;max-width:620px}
+.xs-brand svg{color:var(--xs-acc)}
+.xs-cfs .cf{height:calc(min(var(--xs-cfh), 78vw * 9 / 16) + 24px);margin-top:12px}
+.xs-cfs .cf-card{width:min(calc(var(--xs-cfh) * 16 / 9),78vw)}
 </style>
-<aside class="bwx-strip" aria-label="bWalletX"><a href="https://bwalletx.com"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><defs><linearGradient id="bwx-g" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="0" y2="105"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#FFD24D"/><stop offset="1" stop-color="#C98F00"/></linearGradient><mask id="bwx-m"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask></defs><g fill="url(#bwx-g)" mask="url(#bwx-m)"><polygon points="45,12 45,76 27,76 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>Part of <b>bWalletX</b></span><span class="bwx-go" aria-hidden="true">&rarr;</span></a></aside>
-<!-- /Part of bWalletX strip -->
+<aside class="xs-strip" aria-label="bWalletX"><a href="https://bwalletx.com"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><defs><linearGradient id="xs-sg" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="0" y2="105"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#FFD24D"/><stop offset="1" stop-color="#C98F00"/></linearGradient><mask id="xs-sm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask></defs><g fill="url(#xs-sg)" mask="url(#xs-sm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>Part of <b>bWalletX</b></span><span class="xs-go" aria-hidden="true">&rarr;</span></a></aside>
 <main>
-<section class="top" aria-labelledby="h1">
-  <video src="/v/kabukicho-wolf.mp4" poster="/v/kabukicho-wolf.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>
-  <header class="wrap nav">
-  <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" width="28" height="28" alt=""><span>bVideo<span class="gold">X</span></span></a>
-  <nav class="nav-links" aria-label="Main"><a href="/browse">Browse</a><a class="hide-s" href="#shelf">Videos</a><a class="hide-s" href="#creators">For creators</a><span data-bwx></span></nav>
-</header>
-  <div class="wrap top-in">
-    <p class="kicker">bVideoX &middot; built on bWalletX</p>
-    <h1 id="h1">bVideo<span class="x">X</span></h1>
-    <p class="lede">Free previews from creators who bring their videos to Bitcoin, signed and kept in their own wallets.</p>
-    <div class="ctas"><a class="btn btn-ghost" href="/browse">Browse</a><a class="btn btn-gold" href="https://bwalletx.com/get">Get bWalletX</a></div>
-  </div>
+<section class="xs-top" aria-labelledby="xs-h1">
+  <video id="xs-hv" src="/v/kabukicho-wolf.mp4" poster="/v/kabukicho-wolf.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>
+  <header class="xs-wrap xs-nav"><a class="xs-brand" href="/" aria-label="bVideoX home"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-bm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-bm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>bVideo<i>X</i></span></a><nav class="xs-links" aria-label="Main"><a href="/browse">Browse</a><a class="xs-hs" href="#shelf">Videos</a><a class="xs-hs" href="#creators">For creators</a><span data-bwx></span></nav></header>
+  <div class="xs-wrap xs-in"><p class="xs-eye">bVideoX &middot; built on bWalletX</p><h1 class="xs-h1" id="xs-h1">Your channel, <i>owned by you.</i></h1><p class="xs-lede">Free previews from creators who bring their videos to Bitcoin, signed and kept in their own wallets.</p><div class="xs-ctas"><a class="xs-btn xs-ghost" href="/browse">Browse</a><a class="xs-btn xs-gold" href="https://bwalletx.com/get">Get bWalletX</a></div></div>
+  <button class="xs-snd" id="xs-snd" type="button" aria-pressed="false">&#9834; Sound on</button>
 </section>
-<section class="hero" aria-label="Featured videos">
-  <p class="kicker">Featured &middot; swipe</p>
+<section class="hero xs-cfs" aria-label="Featured videos">
+  <p class="xs-kick">Featured &middot; swipe</p>
   <div class="cf" id="cf" role="region" aria-roledescription="carousel" aria-label="Featured videos"></div>
   <div class="cf-nav">
     <button class="arrow" id="prev" aria-label="Previous video">&larr;</button>
@@ -168,9 +186,9 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 
 <section id="shelf">
   <div class="wrap">
-    <div class="cat-head"><div><p class="kicker">The catalogue</p>
-    <h2>Already on <span>bVideoX.</span></h2>
-    <p class="lede">Short free previews. Hover or tap a card to play it.</p></div></div>
+    <div class="xs-cat"><p class="xs-eye">The catalogue</p>
+    <h2>Already on <i>bVideoX.</i></h2>
+    <p class="xs-sub">Short free previews. Hover or tap a card to play it.</p></div>
     <div class="shelf" id="shelfGrid"></div>
   </div>
 </section>
@@ -321,6 +339,13 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
     { n: 'TERRORNODE', p: 'Stills from the TERRORNODE world. Previews to follow.', imgs: ['terrornode-still-2', 'terrornode-still-3'] },
   ];
   document.getElementById('rows').innerHTML = ROWS.map((r) => `<div class="row"><div><h3>${esc(r.n)}${r.demo ? ' <span class="demo-tag">Demo</span>' : ''}</h3><p>${esc(r.p)}</p></div><div class="thumbs">${r.imgs.map((i) => `<img src="/v/${i}.jpg" alt="" loading="lazy">`).join('')}</div></div>`).join('');
+})();
+</script>
+<script>
+(() => { // hero sound: off until the visitor asks; the press is the gesture that lets sound play
+  const v = document.getElementById('xs-hv'), b = document.getElementById('xs-snd');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) v.removeAttribute('autoplay');
+  b.onclick = () => { v.muted = !v.muted; if (!v.muted) v.play().catch(() => {}); b.setAttribute('aria-pressed', String(!v.muted)); b.innerHTML = v.muted ? '&#9834; Sound on' : '&#9834; Sound off'; };
 })();
 </script>
 <script src="/mine.js" defer></script>

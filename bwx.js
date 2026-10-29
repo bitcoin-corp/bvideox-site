@@ -12,7 +12,7 @@
   const short = (k) => k.slice(0, 6) + '…' + k.slice(-4);
   const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const css = document.createElement('style');
-  css.textContent = `.bwx-btn{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,210,77,.45);background:#0b0b0c;color:#ffd24d;font:600 14px 'Space Grotesk',sans-serif;cursor:pointer}
+  css.textContent = `.bwx-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,210,77,.45);background:#0b0b0c;color:#ffd24d;font:600 14px 'Space Grotesk',sans-serif;cursor:pointer}
   .bwx-btn{max-width:100%;min-width:0}.bwx-pm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   header [data-bwx]{display:inline-flex;align-items:center;min-width:0;max-width:min(62vw,340px)}
   .bwx-get{margin-left:8px;font-size:12px;color:#ffd24d;white-space:nowrap}
@@ -26,6 +26,9 @@
   document.head.appendChild(css);
 
   let key = null, wallet = null, alias = null, paymail = null;
+  // Header, no wallet in this browser (desktop, no extension): 'Get bWalletX'. Phones get Connect (it pairs).
+  let noWallet = false;
+  const ua = navigator.userAgent, phone = /iPhone|iPad|Android/i.test(ua);
   /** Main name for an identity key, from the bWalletX paymail server (public lookup): {paymail, alias}. */
   const nameFor = async (k) => {
     try { const r = await fetch('https://pay.bwallet.space/api/paymail/lookup?key=' + k); const j = await r.json(); return r.ok && j.paymail ? { paymail: j.paymail, alias: j.alias || null } : null; } catch { return null; }
@@ -60,6 +63,11 @@
       a.className = 'bwx-btn on'; a.href = '/studio';
       a.innerHTML = `Your studio · ${label} <span aria-hidden="true">&rarr;</span>`;
       s.appendChild(a); return;
+    }
+    if (!key && inNav && noWallet) {
+      const g = document.createElement('a');
+      g.className = 'bwx-btn'; g.href = 'https://bwalletx.com/get'; g.textContent = 'Get bWalletX';
+      s.appendChild(g); return;
     }
     const b = document.createElement('button');
     b.type = 'button';
@@ -130,4 +138,5 @@
   const touch = async () => { try { const f = await C.discoverBwalletX?.(800); if (f && f.wallet) await f.wallet.getPublicKey({ identityKey: true }); } catch {} };
   fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => { setKey(j.identityKey || null); if (j.identityKey) touch(); }).catch(draw);
   draw();
+  if (!phone && !window.CWI && C.discoverBwalletX) C.discoverBwalletX(800).then((f) => { if (!f && !key) { noWallet = true; draw(); } }).catch(() => {});
 })();
