@@ -195,7 +195,7 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   const X = (id, snd = true) => ({ id, t: T(id), by: 'NPGX', note: 'Title sequence', snd });
   const R = (id, t) => ({ id: 'red-' + id, t, by: 'NPG RED', note: 'Scene', snd: false });
   const D = (id, t) => ({ id: id + '-demo', t, by: 'NPGX — music video demo', note: 'Demo · preview', snd: true, demo: true });
-  const DEMOS = [D('tokyo-gutter-queen', 'Tokyo Gutter Queen'), D('underground-empress', 'Underground Empress')];
+  const DEMOS = [D('tokyo-gutter-queen', 'Tokyo Gutter Queen'), D('underground-empress', 'Underground Empress'), D('razor-kisses', 'Razor Kisses')];
   const FEATURED = [...DEMOS, X('kabukicho-wolf'), X('electric-geisha'), X('gasoline-heart'), R('battle-scene-2', 'Battle in the Streets'), X('concrete-sakura'), X('last-train-to-nowhere'), X('dead-idols'), R('climax-battle-1', 'The Climax'), X('underground-empress'), X('neon-blood-riot')];
   const SHELF = [X('akihabara-fury'), X('blade-girl'), X('chrome-fist'), X('harajuku-chainsaw'), X('roppongi-warzone'), X('shibuya-mosh-pit'), X('shinobi-girls'), X('tokaido-reload'), X('tokyo-gutter-queen'), X('black-rose'), X('molotov-kiss'), R('battle-scene-1', 'The Machine'), R('battle-scene-3', 'City Under Watch'), R('battle-scene-4', 'Skyline Raid')];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
