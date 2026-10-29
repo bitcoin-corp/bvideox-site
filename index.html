@@ -50,7 +50,7 @@ section{padding:64px 0;border-bottom:1px solid var(--line)}
 /* hero coverflow */
 .hero{padding:28px 0 48px;text-align:center;overflow:hidden}
 .hero .lede{margin:0 auto 8px}
-.cf{position:relative;height:clamp(230px,36vw,420px);margin:26px auto 0;max-width:1160px;overflow:hidden;perspective:1400px;touch-action:pan-y}
+.cf{position:relative;height:clamp(230px,36vw,420px);margin:26px auto 0;max-width:1160px;overflow:hidden;perspective:1400px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .cf-card{position:absolute;left:50%;top:50%;width:min(640px,78vw);aspect-ratio:16/9;margin:0;border-radius:18px;overflow:hidden;background:#111;border:1px solid #222;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .5s,filter .5s;cursor:pointer;box-shadow:0 30px 60px rgba(0,0,0,.6)}
 .cf-card img,.cf-card video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .cf-card.on{border-color:rgba(255,210,77,.55);cursor:default}
@@ -236,14 +236,37 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   document.getElementById('next').onclick = () => go(cur + 1);
   [...dots.children].forEach((b, i) => (b.onclick = () => go(i)));
   cf.addEventListener('click', (e) => {
+    if (dragged) { dragged = false; return; }
     const s = e.target.closest('.snd');
     if (s) { sound = !sound; layout(); return; }
     const c = e.target.closest('.cf-card'); if (c && +c.dataset.i !== cur) go(+c.dataset.i);
   });
   cf.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') go(cur - 1); if (e.key === 'ArrowRight') go(cur + 1); });
-  let sx = null;
-  cf.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
-  cf.addEventListener('touchend', (e) => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); sx = null; });
+  // Trackpad / Magic Mouse swipe: horizontal wheel (or Shift+wheel) steps one card per gesture.
+  // Vertical wheel is never touched, so the page still scrolls. A long fast swipe may step twice.
+  function wheelSwipe(el, step) {
+    let acc = 0, steps = 0, idle = 0;
+    el.addEventListener('wheel', (e) => {
+      const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+      let dx = e.deltaX * k, dy = e.deltaY * k;
+      if (e.shiftKey && !dx) { dx = dy; dy = 0; }
+      if (Math.abs(dx) <= Math.abs(dy) || Math.abs(dx) < 2) return;
+      e.preventDefault();
+      clearTimeout(idle);
+      idle = setTimeout(() => { acc = 0; steps = 0; }, 200); // momentum tail over: unlock
+      acc += dx;
+      if (steps === 0 && Math.abs(acc) >= 50) { step(Math.sign(acc)); steps = 1; acc = 0; }
+      else if (steps === 1 && Math.abs(acc) >= 600) { step(Math.sign(acc)); steps = 2; }
+    }, { passive: false });
+  }
+  wheelSwipe(cf, (d) => go(cur + d));
+  // Drag / swipe with mouse, pen or touch (vertical page scroll stays native via touch-action: pan-y).
+  let sx = null, sy = 0, dragged = false;
+  cf.addEventListener('pointerdown', (e) => { if (e.target.closest('.snd')) return; sx = e.clientX; sy = e.clientY; dragged = false; });
+  cf.addEventListener('pointermove', (e) => { if (sx != null && Math.abs(e.clientX - sx) > 8 && Math.abs(e.clientX - sx) > Math.abs(e.clientY - sy)) dragged = true; });
+  const endDrag = (e) => { if (sx == null) return; const dx = e.clientX - sx; if (dragged && Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); sx = null; };
+  cf.addEventListener('pointerup', endDrag); cf.addEventListener('pointercancel', () => { sx = null; });
+  cf.addEventListener('dragstart', (e) => e.preventDefault());
   addEventListener('resize', layout);
   document.addEventListener('visibilitychange', () => { if (document.hidden) vid?.pause(); else vid?.play().catch(() => {}); });
   layout();
