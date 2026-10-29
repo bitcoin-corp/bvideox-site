@@ -105,6 +105,25 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .bwx-btn{border-color:rgba(255,210,77,.5)!important;color:var(--gold)!important}
 .bwx-btn.on{background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#e0a800)!important;color:#000!important;text-decoration:none}
 @media(prefers-reduced-motion:reduce){.cf-card{transition:none}}
+/* homepage consistency: bMoviesX-style hero (~60vh) on top, coverflow directly below, catalogue after */
+.top{padding:0;position:relative;min-height:max(440px,calc(60svh - 36px));display:flex;flex-direction:column;isolation:isolate;overflow:hidden;background:#000;border-bottom:1px solid var(--line)}
+.top>video,.top>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;z-index:-2}
+.top::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.75) 0,rgba(0,0,0,0) 26%),linear-gradient(0deg,#000 0,rgba(0,0,0,.85) 22%,rgba(0,0,0,.2) 65%,rgba(0,0,0,0) 100%),linear-gradient(90deg,rgba(0,0,0,.7) 0,rgba(0,0,0,0) 65%)}
+.top .nav{width:100%}
+.top-in{margin-top:auto;padding-bottom:40px;width:100%}
+.top-in h1{font-size:clamp(52px,7vw,104px);margin:0 0 10px}
+.top-in .lede{margin:0 0 22px;max-width:560px}
+.top-in .ctas .btn{min-width:150px}
+@media(max-width:640px){.top-in .ctas .btn{flex:1 1 100%}}
+.hero{padding:24px 0 40px}
+.hero .kicker{margin:0}
+.hero .cf{margin-top:14px}
+/* catalogue (bMoviesX style) */
+.cat-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.cat-head h2{font:700 clamp(40px,6vw,76px)/.95 'Space Grotesk';letter-spacing:-.04em;text-transform:uppercase;margin:0}
+.cat-head h2 span{color:var(--gold)}
+.cat-head .lede{margin:14px 0 0;color:var(--mute);font-size:17px}
+@media(prefers-reduced-motion:reduce){.top>video{display:none}}
 </style>
 </head>
 <body>
@@ -122,18 +141,22 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 </style>
 <aside class="bwx-strip" aria-label="bWalletX"><a href="https://bwalletx.com"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><defs><linearGradient id="bwx-g" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="0" y2="105"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#FFD24D"/><stop offset="1" stop-color="#C98F00"/></linearGradient><mask id="bwx-m"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask></defs><g fill="url(#bwx-g)" mask="url(#bwx-m)"><polygon points="45,12 45,76 27,76 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>Part of <b>bWalletX</b></span><span class="bwx-go" aria-hidden="true">&rarr;</span></a></aside>
 <!-- /Part of bWalletX strip -->
-<header class="wrap nav">
+<main>
+<section class="top" aria-labelledby="h1">
+  <video src="/v/kabukicho-wolf.mp4" poster="/v/kabukicho-wolf.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true"></video>
+  <header class="wrap nav">
   <a class="brand" href="/" aria-label="bVideoX home"><img src="/logo.svg" width="28" height="28" alt=""><span>bVideo<span class="gold">X</span></span></a>
   <nav class="nav-links" aria-label="Main"><a href="/browse">Browse</a><a class="hide-s" href="#shelf">Videos</a><a class="hide-s" href="#creators">For creators</a><span data-bwx></span></nav>
 </header>
-
-<main>
-<section class="hero" aria-labelledby="h1">
-  <div class="wrap">
-    <p class="kicker">Free previews · on Bitcoin</p>
+  <div class="wrap top-in">
+    <p class="kicker">bVideoX &middot; built on bWalletX</p>
     <h1 id="h1">bVideo<span class="x">X</span></h1>
-    <p class="lede">Watch free previews from creators who bring their videos to Bitcoin, signed and kept in their own wallets.</p>
+    <p class="lede">Free previews from creators who bring their videos to Bitcoin, signed and kept in their own wallets.</p>
+    <div class="ctas"><a class="btn btn-ghost" href="/browse">Browse</a><a class="btn btn-gold" href="https://bwalletx.com/get">Get bWalletX</a></div>
   </div>
+</section>
+<section class="hero" aria-label="Featured videos">
+  <p class="kicker">Featured &middot; swipe</p>
   <div class="cf" id="cf" role="region" aria-roledescription="carousel" aria-label="Featured videos"></div>
   <div class="cf-nav">
     <button class="arrow" id="prev" aria-label="Previous video">&larr;</button>
@@ -145,9 +168,9 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 
 <section id="shelf">
   <div class="wrap">
-    <p class="kicker">The shelf</p>
-    <h2>More to watch.</h2>
-    <p class="lede">Short free previews. Hover or tap a card to play it.</p>
+    <div class="cat-head"><div><p class="kicker">The catalogue</p>
+    <h2>Already on <span>bVideoX.</span></h2>
+    <p class="lede">Short free previews. Hover or tap a card to play it.</p></div></div>
     <div class="shelf" id="shelfGrid"></div>
   </div>
 </section>
