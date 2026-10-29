@@ -80,6 +80,7 @@ button:focus-visible,a:focus-visible,.cf-card:focus-visible{outline:2px solid va
 .item b{display:block;font:600 15px 'Space Grotesk';white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item span{font-size:12px;color:var(--mute)}
 /* creator rows */
+.demo-tag{display:inline-block;vertical-align:middle;margin-left:6px;padding:2px 8px;border:1px solid var(--gold);border-radius:999px;color:var(--gold);font:600 11px 'Space Grotesk';letter-spacing:.06em;text-transform:uppercase}
 .row{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:center;padding:20px 0;border-top:1px solid var(--line)}
 @media(max-width:760px){.row{grid-template-columns:1fr}}
 .row h3{font:700 22px 'Space Grotesk';margin:0 0 4px}
@@ -193,14 +194,16 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   const T = (s) => s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   const X = (id, snd = true) => ({ id, t: T(id), by: 'NPGX', note: 'Title sequence', snd });
   const R = (id, t) => ({ id: 'red-' + id, t, by: 'NPG RED', note: 'Scene', snd: false });
-  const FEATURED = [X('kabukicho-wolf'), X('electric-geisha'), X('gasoline-heart'), R('battle-scene-2', 'Battle in the Streets'), X('concrete-sakura'), X('last-train-to-nowhere'), X('dead-idols'), R('climax-battle-1', 'The Climax'), X('underground-empress'), X('neon-blood-riot')];
+  const D = (id, t) => ({ id: id + '-demo', t, by: 'NPGX — music video demo', note: 'Demo · preview', snd: true, demo: true });
+  const DEMOS = [D('tokyo-gutter-queen', 'Tokyo Gutter Queen'), D('underground-empress', 'Underground Empress')];
+  const FEATURED = [...DEMOS, X('kabukicho-wolf'), X('electric-geisha'), X('gasoline-heart'), R('battle-scene-2', 'Battle in the Streets'), X('concrete-sakura'), X('last-train-to-nowhere'), X('dead-idols'), R('climax-battle-1', 'The Climax'), X('underground-empress'), X('neon-blood-riot')];
   const SHELF = [X('akihabara-fury'), X('blade-girl'), X('chrome-fist'), X('harajuku-chainsaw'), X('roppongi-warzone'), X('shibuya-mosh-pit'), X('shinobi-girls'), X('tokaido-reload'), X('tokyo-gutter-queen'), X('black-rose'), X('molotov-kiss'), R('battle-scene-1', 'The Machine'), R('battle-scene-3', 'City Under Watch'), R('battle-scene-4', 'Skyline Raid')];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
   // coverflow
   const cf = document.getElementById('cf'), dots = document.getElementById('dots');
   let cur = 0;
-  cf.innerHTML = FEATURED.map((v, i) => `<figure class="cf-card" data-i="${i}" tabindex="-1" aria-label="${esc(v.t)} by ${esc(v.by)}"><img src="/v/${v.id}.jpg" alt="" loading="${i < 3 ? 'eager' : 'lazy'}"><span class="free">FREE PREVIEW</span><figcaption class="cap"><div><b>${esc(v.t)}</b><span>${esc(v.by)} · ${esc(v.note)}</span></div>${v.snd ? '<button class="snd" type="button" aria-pressed="false">&#9654; Sound</button>' : ''}</figcaption></figure>`).join('');
+  cf.innerHTML = FEATURED.map((v, i) => `<figure class="cf-card" data-i="${i}" tabindex="-1" aria-label="${esc(v.t)} by ${esc(v.by)}"><img src="/v/${v.id}.jpg" alt="" loading="${i < 3 ? 'eager' : 'lazy'}"><span class="free">${v.demo ? 'DEMO · PREVIEW' : 'FREE PREVIEW'}</span><figcaption class="cap"><div><b>${esc(v.t)}</b><span>${esc(v.by)} · ${esc(v.note)}</span></div>${v.snd ? '<button class="snd" type="button" aria-pressed="false">&#9654; Sound</button>' : ''}</figcaption></figure>`).join('');
   dots.innerHTML = FEATURED.map((v, i) => `<button type="button" aria-label="${esc(v.t)}"></button>`).join('');
   const cards = [...cf.children];
   let vid = null, sound = false;
@@ -289,11 +292,12 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 
   // channel rows
   const ROWS = [
+    { n: 'NPGX · Music video demos', p: 'Demo · 60-second previews. Not finished, pointing the right direction.', imgs: DEMOS.map((d) => d.id), demo: true },
     { n: 'NPGX', p: 'Title sequences from the NPGX music-video series.', imgs: ['kabukicho-wolf', 'electric-geisha', 'dead-idols', 'shinobi-girls'] },
     { n: 'NPG RED', p: 'Scenes from Ninja Punk Girls RED, drawn in black, white and red.', imgs: ['red-battle-scene-2', 'red-climax-battle-1', 'red-battle-scene-3', 'red-battle-scene-1'] },
     { n: 'TERRORNODE', p: 'Stills from the TERRORNODE world. Previews to follow.', imgs: ['terrornode-still-2', 'terrornode-still-3'] },
   ];
-  document.getElementById('rows').innerHTML = ROWS.map((r) => `<div class="row"><div><h3>${esc(r.n)}</h3><p>${esc(r.p)}</p></div><div class="thumbs">${r.imgs.map((i) => `<img src="/v/${i}.jpg" alt="" loading="lazy">`).join('')}</div></div>`).join('');
+  document.getElementById('rows').innerHTML = ROWS.map((r) => `<div class="row"><div><h3>${esc(r.n)}${r.demo ? ' <span class="demo-tag">Demo</span>' : ''}</h3><p>${esc(r.p)}</p></div><div class="thumbs">${r.imgs.map((i) => `<img src="/v/${i}.jpg" alt="" loading="lazy">`).join('')}</div></div>`).join('');
 })();
 </script>
 <script src="/mine.js" defer></script>
