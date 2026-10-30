@@ -168,6 +168,21 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .xs-brand svg{color:var(--xs-acc)}
 .xs-cfs .cf{height:calc(min(var(--xs-cfh), 78vw * 9 / 16) + 24px);margin-top:12px}
 .xs-cfs .cf-card{width:min(calc(var(--xs-cfh) * 16 / 9),78vw)}
+/* offers shelf (hidden until the feed returns open offers) */
+.ofr[hidden]{display:none}
+.ofr-rail{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x proximity;margin:22px 0 0;padding:4px 0 14px;list-style:none;scrollbar-width:thin;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;max-width:100%}
+.ofr-rail li{flex:none;width:clamp(160px,42vw,220px);scroll-snap-align:start}
+.ofr-card{display:flex;flex-direction:column;height:100%;background:#0b0b0c;border:1px solid #1d1d1d;border-radius:14px;overflow:hidden}
+.ofr-card:hover{border-color:rgba(255,210,77,.45)}
+.ofr-card>a:not(.ofr-go){color:inherit;text-decoration:none;display:block}
+.ofr-img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:#111}
+.ofr-ph{display:grid;place-items:center;width:100%;aspect-ratio:1/1;background:linear-gradient(160deg,#ffe58a,#ffd24d 50%,#c98f00);color:#000;font:700 44px/1 'Space Grotesk',system-ui,sans-serif}
+.ofr-m{display:block;padding:10px 12px 4px}
+.ofr-m b{display:block;font:600 15px/1.25 'Space Grotesk',system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f4f1e8}
+.ofr-p{display:block;margin-top:2px;font:600 13px/1.3 'Space Grotesk',system-ui,sans-serif;color:#ffd24d}
+.ofr-go{margin:auto 12px 12px;display:inline-flex;align-items:center;justify-content:center;min-height:40px;border-radius:999px;background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#c98f00);color:#000;font:600 14px/1 'Space Grotesk',system-ui,sans-serif;text-decoration:none}
+.ofr-go:hover{filter:brightness(1.06)}
+@media (prefers-reduced-motion:reduce){.ofr-rail{scroll-behavior:auto}}
 </style>
 <aside class="xs-strip" aria-label="bWalletX"><a href="https://bwalletx.com"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><defs><linearGradient id="xs-sg" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="0" y2="105"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#FFD24D"/><stop offset="1" stop-color="#C98F00"/></linearGradient><mask id="xs-sm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask></defs><g fill="url(#xs-sg)" mask="url(#xs-sm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>Part of <b>bWalletX</b></span><span class="xs-go" aria-hidden="true">&rarr;</span></a></aside>
 <main>
@@ -188,6 +203,12 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   <p class="small" style="margin:10px 16px 0">Previews play muted. Tap <b>Sound</b> to listen.</p>
 </section>
 
+<section class="ofr" id="offers" aria-labelledby="ofr-h" data-feed="https://www.bchatx.com/api/offers?market=video&amp;status=open&amp;source=bvideox" hidden>
+  <div class="wrap">
+    <div class="xs-cat"><p class="xs-eye">Offers</p><h2 id="ofr-h">Open offers on <i>bVideoX.</i></h2><p class="xs-sub">Tap a card to see it, or make an offer of your own.</p></div>
+    <ul class="ofr-rail" role="list" aria-label="Open offers, scrolls sideways"></ul>
+  </div>
+</section>
 <section id="shelf">
   <div class="wrap">
     <div class="xs-cat"><p class="xs-eye">The catalogue</p>
@@ -353,5 +374,39 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 })();
 </script>
 <script src="/mine.js" defer></script>
+<script>
+// Offers shelf: open offers from the bChatX feed. Stays hidden when the feed is empty or fails.
+(function () {
+  var sec = document.getElementById('offers'); if (!sec || !window.fetch) return;
+  var rail = sec.querySelector('.ofr-rail');
+  var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var https = function (u) { try { var x = new URL(String(u)); return x.protocol === 'https:' ? x.href : ''; } catch (e) { return ''; } };
+  var price = function (o) {
+    var p = [];
+    if (typeof o.amount_cents === 'number' && isFinite(o.amount_cents) && o.amount_cents >= 0) p.push('$' + (o.amount_cents / 100).toLocaleString('en-US', { minimumFractionDigits: o.amount_cents % 100 ? 2 : 0, maximumFractionDigits: 2 }));
+    if (o.pct != null && o.pct !== '' && isFinite(Number(o.pct))) p.push(Number(o.pct) + '%');
+    return p.join(' + ');
+  };
+  var ctl = window.AbortController ? new AbortController() : null;
+  var t = setTimeout(function () { if (ctl) ctl.abort(); }, 6000);
+  fetch(sec.getAttribute('data-feed'), { credentials: 'omit', signal: ctl ? ctl.signal : undefined })
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function (list) {
+      clearTimeout(t);
+      if (!Array.isArray(list)) return;
+      var html = list.filter(function (o) { return o && o.status === 'open' && https(o.offer_url); }).slice(0, 24).map(function (o) {
+        var url = https(o.url) || https(o.offer_url), img = https(o.image), title = String(o.title || 'Untitled'), pr = price(o);
+        return '<li><div class="ofr-card"><a href="' + esc(url) + '">' +
+          (img ? '<img class="ofr-img" src="' + esc(img) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '<span class="ofr-ph" aria-hidden="true">b</span>') +
+          '<span class="ofr-m"><b>' + esc(title) + '</b>' + (pr ? '<span class="ofr-p">' + esc(pr) + '</span>' : '') + '</span></a>' +
+          '<a class="ofr-go" href="' + esc(https(o.offer_url)) + '" aria-label="Make an offer on ' + esc(title) + '">Make an offer</a></div></li>';
+      }).join('');
+      if (!html) return;
+      rail.innerHTML = html;
+      sec.hidden = false;
+    })
+    .catch(function () { clearTimeout(t); });
+})();
+</script>
 </body>
 </html>
