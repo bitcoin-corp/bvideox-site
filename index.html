@@ -117,6 +117,7 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .cat-head h2{font:700 clamp(40px,6vw,76px)/.95 'Space Grotesk';letter-spacing:-.04em;margin:0}
 .cat-head h2 span{color:var(--gold)}
 .cat-head .lede{margin:14px 0 0;color:var(--mute);font-size:17px}
+
 </style>
 </head>
 <body>
@@ -185,13 +186,19 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .ofr-go{margin:auto 12px 12px;display:inline-flex;align-items:center;justify-content:center;min-height:40px;border-radius:999px;background:linear-gradient(180deg,#ffe58a,#ffd24d 55%,#c98f00);color:#000;font:600 14px/1 'Space Grotesk',system-ui,sans-serif;text-decoration:none}
 .ofr-go:hover{filter:brightness(1.06)}
 @media (prefers-reduced-motion:reduce){.ofr-rail{scroll-behavior:auto}}
+/* Wordmark option 2 (owner 31 Oct 2026): gold b logo, name in the product colour, white X; title and top bar */
+.xs-brand svg{color:#F5B800}
+.xs-brand .xs-nm,.xs-h1 .xs-nm{font-style:normal;color:var(--xs-acc)}
+.xs-brand i,.xs-h1 .xs-x{color:#fff}
+.xs-h1 .xs-hb{display:inline-block;height:.95em;width:auto;vertical-align:-.03em;margin-right:.04em;color:#F5B800}
+.xs-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 <aside class="xs-strip" aria-label="bWalletX"><a href="https://bwalletx.com"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><defs><linearGradient id="xs-sg" gradientUnits="userSpaceOnUse" x1="0" y1="12" x2="0" y2="105"><stop offset="0" stop-color="#FFE58A"/><stop offset=".55" stop-color="#FFD24D"/><stop offset="1" stop-color="#C98F00"/></linearGradient><mask id="xs-sm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask></defs><g fill="url(#xs-sg)" mask="url(#xs-sm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>Part of <b>bWalletX</b></span><span class="xs-go" aria-hidden="true">&rarr;</span></a></aside>
 <main>
 <section class="xs-top" aria-labelledby="xs-h1">
   <video id="xs-hv" poster="/v/kabukicho-wolf.jpg" muted loop playsinline preload="metadata" aria-hidden="true"><source src="/v/kabukicho-wolf.mp4" type="video/mp4"></video>
-  <header class="xs-wrap xs-nav"><a class="xs-brand" href="/" aria-label="bVideoX home"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-bm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-bm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span>bVideo<i>X</i></span></a><nav class="xs-links" aria-label="Main"><a href="/browse">Browse</a><a class="xs-hs" href="#shelf">Videos</a><a class="xs-hs" href="#creators">For creators</a><span data-bwx></span></nav></header>
-  <div class="xs-wrap xs-in"><h1 class="xs-h1" id="xs-h1"><i>b</i>Video<span class="xs-x">X</span></h1><p class="xs-lede">Free previews from creators who keep their videos in their own wallets.</p><div class="xs-ctas"><a class="xs-btn xs-ghost" href="/browse">Browse</a><a class="xs-btn xs-gold" href="https://bwalletx.com/get">Get bWalletX</a></div></div>
+  <header class="xs-wrap xs-nav"><a class="xs-brand" href="/" aria-label="bVideoX home"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-bm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-bm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span><span class="xs-sr">b</span><span class="xs-nm">Video</span><i>X</i></span></a><nav class="xs-links" aria-label="Main"><a href="/browse">Browse</a><a class="xs-hs" href="#shelf">Videos</a><a class="xs-hs" href="#creators">For creators</a><span data-bwx></span></nav></header>
+  <div class="xs-wrap xs-in"><h1 class="xs-h1" id="xs-h1"><svg class="xs-hb" viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-hbm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-hbm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span class="xs-sr">b</span><span class="xs-nm">Video</span><span class="xs-x">X</span></h1><p class="xs-lede">Free previews from creators who keep their videos in their own wallets.</p><div class="xs-ctas"><a class="xs-btn xs-ghost" href="/browse">Browse</a><a class="xs-btn xs-gold" href="https://bwalletx.com/get">Get bWalletX</a></div></div>
   <button class="xs-snd" id="xs-snd" type="button" aria-pressed="false">&#9834; Sound on</button>
 </section>
 <section class="hero xs-cfs" aria-label="Featured videos">
