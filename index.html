@@ -119,6 +119,16 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 .cat-head .lede{margin:14px 0 0;color:var(--mute);font-size:17px}
 
 </style>
+<style>
+.xs-top{position:relative;isolation:isolate}
+.xs-h1{font-family:'Space Grotesk',system-ui,sans-serif!important;font-weight:800!important;letter-spacing:-.02em}
+.xs-h1 .xs-hb{color:#F5B800}
+.rx-g{background:linear-gradient(90deg,#c2410c,#FF6A13 45%,#fed7aa);-webkit-background-clip:text;background-clip:text;color:transparent!important;filter:drop-shadow(0 3px 0 #000)}
+.rx-ghost{position:absolute;right:-20px;bottom:-50px;font:800 clamp(140px,22vw,300px)/1 'Space Grotesk',sans-serif;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:2px rgba(255,106,19,.3);z-index:1;pointer-events:none;white-space:nowrap}
+.rx-tx{position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px),radial-gradient(ellipse at 90% 45%,rgba(255,106,19,.22),transparent 55%)}
+.xs-top .xs-in,.xs-top .xs-nav{position:relative;z-index:2}.xs-snd{z-index:3}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@800&display=swap" rel="stylesheet">
 </head>
 <body>
 <style>
@@ -198,8 +208,8 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 <section class="xs-top" aria-labelledby="xs-h1">
   <video id="xs-hv" poster="/v/kabukicho-wolf.jpg" muted loop playsinline preload="metadata" aria-hidden="true"><source src="/v/kabukicho-wolf.mp4" type="video/mp4"></video>
   <header class="xs-wrap xs-nav"><a class="xs-brand" href="/" aria-label="bVideoX home"><svg viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-bm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-bm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span><span class="xs-sr">b</span><span class="xs-nm">Video</span><i>X</i></span></a><nav class="xs-links" aria-label="Main"><a href="/browse">Browse</a><a class="xs-hs" href="#shelf">Videos</a><a class="xs-hs" href="#creators">For creators</a><span data-bwx></span></nav></header>
-  <div class="xs-wrap xs-in"><h1 class="xs-h1" id="xs-h1"><svg class="xs-hb" viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-hbm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-hbm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span class="xs-sr">b</span><span class="xs-nm">Video</span><span class="xs-x">X</span></h1><p class="xs-lede">Free previews from creators who keep their videos in their own wallets.</p><div class="xs-ctas"><a class="xs-btn xs-ghost" href="/browse">Browse</a><a class="xs-btn xs-gold" href="https://bwalletx.com/get">Get bWalletX</a></div></div>
-  <button class="xs-snd" id="xs-snd" type="button" aria-pressed="false">&#9834; Sound on</button>
+  <div class="xs-wrap xs-in"><h1 class="xs-h1" id="xs-h1"><svg class="xs-hb" viewBox="23 8 74 100" aria-hidden="true" focusable="false"><mask id="xs-hbm"><rect width="140" height="140" fill="#fff"/><circle cx="60" cy="72" r="15" fill="#000"/></mask><g fill="currentColor" mask="url(#xs-hbm)"><polygon points="45,12 45,72 27,72 27,30"/><circle cx="60" cy="72" r="33"/></g></svg><span class="xs-sr">b</span><span class="xs-nm rx-g">VideoX</span></h1><p class="xs-lede">Free previews from creators who keep their videos in their own wallets.</p><div class="xs-ctas"><a class="xs-btn xs-ghost" href="/browse">Browse</a><a class="xs-btn xs-gold" href="https://bwalletx.com/get">Get bWalletX</a></div></div>
+  <div class="rx-ghost" aria-hidden="true">VIDEOX</div><div class="rx-tx" aria-hidden="true"></div><button class="xs-snd" id="xs-snd" type="button" aria-pressed="false">&#9834; Sound on</button>
 </section>
 <section class="hero xs-cfs" aria-label="Featured videos">
   <p class="xs-kick">Featured &middot; swipe</p>
