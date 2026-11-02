@@ -89,5 +89,11 @@
       "destination": "https://bvideox.com/:path*",
       "permanent": true
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "*": false,
+      "main": true
+    }
+  }
 }

@@ -223,6 +223,7 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
   <p class="small" style="margin:10px 16px 0">Previews play muted. Tap <b>Sound</b> to listen.</p>
 </section>
 
+<!-- Offers shelf. Hidden: CEO ruling 2 Nov 2026 (s.755/s.21), until /api/offers drops stake offers publicly. The section stays hidden: OFFERS_SHELF_ON below is false. -->
 <section class="ofr" id="offers" aria-labelledby="ofr-h" data-feed="https://www.bchatx.com/api/offers?market=video&amp;status=open&amp;source=bvideox" hidden>
   <div class="wrap">
     <div class="xs-cat"><p class="xs-eye">Offers</p><h2 id="ofr-h">Open offers on <i>bVideoX.</i></h2><p class="xs-sub">Tap a card to see it, or make an offer of your own.</p></div>
@@ -397,6 +398,9 @@ footer{padding:40px 0;color:var(--mute);font-size:13px}
 <script>
 // Offers shelf: open offers from the bChatX feed. Stays hidden when the feed is empty or fails.
 (function () {
+  // Hidden: CEO ruling 2 Nov 2026 (s.755/s.21), until /api/offers drops stake offers publicly
+  var OFFERS_SHELF_ON = false;
+  if (!OFFERS_SHELF_ON) return;
   var sec = document.getElementById('offers'); if (!sec || !window.fetch) return;
   var rail = sec.querySelector('.ofr-rail');
   var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
