@@ -2,8 +2,8 @@
 // Forwards to the push server (POST /v1/studios), which checks the wallet's BRC-100 signature over
 //   "bvideox studio <identityKey> <username> <domain|-> <timestamp>"  (protocol [2,'bvideox studio'], keyID 'settings')
 // so only the key holder can name a studio. The identity key comes from the signed-in session, never the body.
-import { readCookie, verifySession } from '@bwalletx/connect/server';
-import { body, originOk, secret } from '../bwalletx/_auth.js';
+import { verifySession } from '@bwalletx/connect/server';
+import { body, originOk, secret, sessionToken } from '../bwalletx/_auth.js';
 import { CLAIMS_API } from '../claim/_claim.js';
 
 export const USERNAME_RE = /^[a-z0-9][a-z0-9_-]{2,29}$/;
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   if (!originOk(req.headers.origin)) return res.status(403).json({ error: 'Wrong origin.' });
   const s = secret();
-  const me = s ? (await verifySession(readCookie(req.headers.cookie, 'bwx_session'), { secret: s }))?.sub || null : null;
+  const me = s ? (await verifySession(sessionToken(req.headers.cookie), { secret: s }))?.sub || null : null;
   if (!me) return res.status(401).json({ error: 'Connect bWalletX first.' });
   const b = await body(req);
   const username = String(b.username || '').trim().toLowerCase();
