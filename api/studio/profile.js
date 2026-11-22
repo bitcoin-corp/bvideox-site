@@ -4,14 +4,14 @@
 //        isOwner, signedIn }
 // The identity key is never shown in the page's main UI; it is returned only so the owner's page can check
 // that the wallet in the browser is the same one.
-import { readCookie, verifySession } from '@bwalletx/connect/server';
-import { secret } from '../bwalletx/_auth.js';
+import { verifySession } from '@bwalletx/connect/server';
+import { secret, sessionToken } from '../bwalletx/_auth.js';
 import { loadStudio, NAME_RE } from './_studio.js';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   const s = secret();
-  const me = s ? (await verifySession(readCookie(req.headers.cookie, 'bwx_session'), { secret: s }))?.sub || null : null;
+  const me = s ? (await verifySession(sessionToken(req.headers.cookie), { secret: s }))?.sub || null : null;
   let studio = null;
   if (req.query?.me) {
     if (!me) return res.status(200).json({ studio: null, signedIn: false, isOwner: false });

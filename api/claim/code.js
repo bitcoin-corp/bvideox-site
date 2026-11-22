@@ -1,10 +1,10 @@
 // POST /api/claim/code { handle } -> { code, channelId, name, handle, expiresAt, studioUrl }
 // Step 2 of the code claim: resolve the channel, then issue a short code bound to this wallet's identity key
 // and the channel id (HMAC, CLAIMS_HMAC_SECRET, 30 minutes). The ticket rides back in an HttpOnly cookie.
-import { readCookie, verifySession } from '@bwalletx/connect/server';
+import { verifySession } from '@bwalletx/connect/server';
 import { codeEnabled, claimsSecret, secret, cookie } from './_claim.js';
 import { issueCode, CODE_TTL } from './_code.js';
-import { body } from '../bwalletx/_auth.js';
+import { body, sessionToken } from '../bwalletx/_auth.js';
 import { resolveHandle, limited } from '../_channels.js';
 
 export default async function handler(req, res) {
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!codeEnabled()) return res.status(503).json({ error: 'Claiming is coming soon', coming: true });
   if (limited(req, 12)) return res.status(429).json({ error: 'Too many tries. Wait a minute, then try again.' });
-  const s = await verifySession(readCookie(req.headers.cookie, 'bwx_session'), { secret: secret() });
+  const s = await verifySession(sessionToken(req.headers.cookie), { secret: secret() });
   const identityKey = s?.sub || null;
   if (!identityKey) return res.status(401).json({ error: 'Connect bWalletX first, so the code is tied to your wallet.', code: 'wallet' });
   const b = await body(req);

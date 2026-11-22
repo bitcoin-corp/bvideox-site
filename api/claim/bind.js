@@ -2,9 +2,9 @@
 // POST /api/claim/bind { timestamp, signature } -> forwards to the push server (POST /v1/claims), which checks
 // the wallet's BRC-100 signature over "bvideox claim youtube <channelId> <identityKey> <timestamp>" and stores
 // the binding. The held paymail stays non-payable until the paymail server activates it (spec §5/§6).
-import { readCookie, verifySession } from '@bwalletx/connect/server';
+import { verifySession } from '@bwalletx/connect/server';
 import { enabled, read, open, secret, claimsSecret, sealClaim, CLAIMS_API, claimState } from './_claim.js';
-import { body } from '../bwalletx/_auth.js';
+import { body, sessionToken } from '../bwalletx/_auth.js';
 import { findChannel } from '../_channels.js';
 
 const TEN_MIN = 600_000;
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (!enabled()) return res.status(503).json({ error: 'Claiming is coming soon', coming: true });
   const proof = open(secret(), read(req, 'bvx_claim'));
   const ok = proof && proof.exp > Date.now() ? proof : null;
-  const s = await verifySession(readCookie(req.headers.cookie, 'bwx_session'), { secret: secret() });
+  const s = await verifySession(sessionToken(req.headers.cookie), { secret: secret() });
   const identityKey = s?.sub || null;
   if (req.method !== 'POST') {
     const claim = ok ? await claimState('youtube', ok.channelId) : null;

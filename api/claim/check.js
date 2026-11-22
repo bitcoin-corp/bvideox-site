@@ -3,10 +3,11 @@
 // seals the same short-lived bvx_claim proof the Google path seals; /api/claim/bind then needs the wallet's
 // signature, unchanged. Rate-limited per IP and per wallet.
 import { createHash } from 'node:crypto';
-import { readCookie, verifySession } from '@bwalletx/connect/server';
+import { verifySession } from '@bwalletx/connect/server';
 import { codeEnabled, claimsSecret, secret, cookie, read, seal } from './_claim.js';
 import { verifyCode } from './_code.js';
 import { limited, REGISTRY } from '../_channels.js';
+import { sessionToken } from '../bwalletx/_auth.js';
 
 const perKey = new Map();
 const keyLimited = (k, max = 10, windowMs = 60_000) => {
@@ -21,7 +22,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!codeEnabled()) return res.status(503).json({ error: 'Claiming is coming soon', coming: true });
   if (limited(req, 15)) return res.status(429).json({ error: 'Too many checks. Wait a minute, then press Check again.' });
-  const s = await verifySession(readCookie(req.headers.cookie, 'bwx_session'), { secret: secret() });
+  const s = await verifySession(sessionToken(req.headers.cookie), { secret: secret() });
   const identityKey = s?.sub || null;
   if (!identityKey) return res.status(401).json({ error: 'Connect bWalletX first.', code: 'wallet' });
   if (keyLimited(identityKey)) return res.status(429).json({ error: 'Too many checks. Wait a minute, then press Check again.' });
