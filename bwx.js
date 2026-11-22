@@ -8,7 +8,8 @@
 (() => {
   const C = window.bWalletXConnect;
   const slots = [...document.querySelectorAll('[data-bwx]')];
-  if (!C || !slots.length) return;
+  // No button on this page still finishes a sign-in bWalletX sent back here (#bwx=ok…, connect 0.9.0).
+  if (!C || (!slots.length && !C.hasReturnFragment?.())) return;
   const short = (k) => k.slice(0, 6) + '…' + k.slice(-4);
   const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const css = document.createElement('style');
@@ -95,12 +96,58 @@
     return modal.querySelector('.bwx-card');
   };
 
-  async function connect(toStudio) {
-    let ticket = null;
+  // Connect 0.9.0, sign-in on the same phone: bWalletX signs in on its Connect card and sends the user back to this
+  // site's root (#bwx=ok…, often in a new tab), where resumeReturned() finishes it. That tab needs the challenge's
+  // sealed ticket for /api/bwalletx/verify, so it is kept here by nonce (it holds no secret: the challenge is public)
+  // with where to go next. Entries go once used, or after 10 minutes.
+  const TICKETS = 'bwx:tickets';
+  const tickets = (fn) => {
     try {
+      const m = JSON.parse(localStorage.getItem(TICKETS) || '{}') || {};
+      for (const n of Object.keys(m)) if (!(Date.now() - m[n].at < 6e5)) delete m[n];
+      const out = fn(m);
+      localStorage.setItem(TICKETS, JSON.stringify(m));
+      return out;
+    } catch { return null; }
+  };
+  const keepTicket = (nonce, ticket, next) => tickets((m) => { m[nonce] = { ticket, next: next || null, at: Date.now() }; });
+  const takeTicket = (nonce) => tickets((m) => { const t = m[nonce] || null; delete m[nonce]; return t; });
+  const here = () => location.origin + location.pathname;
+  const go = (to) => { const u = new URL(to, location.origin); if (u.origin === location.origin && u.href !== here()) location.replace(u.href); };
+
+  const signedIn = (identityKey, w, toStudio) => {
+    wallet = w || wallet; close(); setKey(identityKey);
+    document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey, fromNav: !!toStudio } }));
+  };
+  const failed = (e) => {
+    if (e && e.code === 'NOT_FOUND') {
+      show(`<h3>No bWalletX found</h3><p>Get the bWalletX extension or app, or use the web wallet.</p><p><a class="bwx-btn on" href="https://bwalletx.com/get">Get bWalletX</a></p>`);
+    } else if (modal) {
+      modal.querySelector('.bwx-card').insertAdjacentHTML('beforeend', `<p style="color:#ff8a7a">${esc((e && e.message) || 'That didn’t work. Try again.')}</p>`);
+    } else {
+      show(`<h3>Couldn’t connect</h3><p style="color:#ff8a7a">${esc((e && e.message) || 'Try again.')}</p>`);
+    }
+  };
+
+  async function connect(toStudio) {
+    let ticket = null, pre = null, app = null;
+    const challenge = async (identityKey) => { const ch = await post('/api/bwalletx/challenge', identityKey ? { identityKey } : {}); ticket = ch.ticket; return ch; };
+    // Connecting from the navbar (any page) opens your account page. The claim page's own step-3 button stays put.
+    const next = toStudio && !/^\/studio\/?$/.test(location.pathname) ? '/studio' : null;
+    try {
+      // On a phone: "Open bWalletX" (a QR can't be scanned by the phone showing it), with the sign-in folded into
+      // Connect so bWalletX asks once and comes back here signed in.
+      if (C.isTouchDevice?.()) {
+        app = C.pairingModal();
+        pre = await challenge().catch(() => null);
+        const login = pre && C.foldableLogin?.(pre, location.origin);
+        if (login) { app.login = login; keepTicket(pre.nonce, ticket, next); } else pre = null;
+      }
       const r = await C.signInWithBwalletX({
-        challenge: async (identityKey) => { const ch = await post('/api/bwalletx/challenge', { identityKey }); ticket = ch.ticket; return ch; },
-        pairing: {
+        // A folded sign-in needs a fresh link: a stored pairing would wait on an app in the background.
+        reusePairing: !(app && app.login),
+        challenge: (identityKey) => { const c = pre; pre = null; return c ? Promise.resolve(c) : challenge(identityKey); },
+        pairing: app || {
           onLink: (link) => {
             let qr = '';
             if (window.qrcode) { const q = window.qrcode(0, 'M'); q.addData(link); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 0 }); }
@@ -110,19 +157,43 @@
           onCode: (code) => { const el = document.getElementById('bwxCode'); if (el) el.innerHTML = `Check your wallet shows <span class="bwx-code">${esc(code)}</span>, then tap Connect.`; },
         },
       });
+      app?.close();
       const v = await post('/api/bwalletx/verify', { identityKey: r.identityKey, nonce: r.nonce, signature: r.signature, ticket });
-      wallet = r.wallet; close(); setKey(v.identityKey);
-      document.dispatchEvent(new CustomEvent('bvideox-wallet', { detail: { identityKey: key, fromNav: !!toStudio } }));
-      // Connecting from the navbar (any page) opens your account page. The claim page's own step-3 button stays put.
-      if (toStudio && !/^\/studio\/?$/.test(location.pathname)) location.assign('/studio');
+      takeTicket(r.nonce);
+      signedIn(v.identityKey, r.wallet, toStudio);
+      if (next) location.assign(next);
     } catch (e) {
-      if (e && e.code === 'NOT_FOUND') {
-        show(`<h3>No bWalletX found</h3><p>Get the bWalletX extension or app, or use the web wallet.</p><p><a class="bwx-btn on" href="https://bwalletx.com/get">Get bWalletX</a></p>`);
-      } else if (modal) {
-        modal.querySelector('.bwx-card').insertAdjacentHTML('beforeend', `<p style="color:#ff8a7a">${esc((e && e.message) || 'That didn’t work. Try again.')}</p>`);
-      } else {
-        show(`<h3>Couldn’t connect</h3><p style="color:#ff8a7a">${esc((e && e.message) || 'Try again.')}</p>`);
+      app?.close();
+      // bWalletX came back in another tab, which finished the sign-in: pick up its session here.
+      if (e && e.code === 'RETURNED_IN_ANOTHER_TAB') return session();
+      if (e && e.message === 'cancelled') return draw();
+      failed(e);
+    }
+  }
+  // The tab bWalletX returned to: finish the pairing, post the sign-in it folded into Connect, go back to the page the
+  // sign-in started on. Resolves true when this page is now signed in (or leaving).
+  async function resumeReturned() {
+    let r = null;
+    try { r = await C.resumeReturnedPairing(); } catch {}
+    if (!r) return false;
+    try {
+      const t = r.login && takeTicket(r.login.nonce);
+      if (r.login && t) {
+        const v = await post('/api/bwalletx/verify', { identityKey: r.login.identityKey, nonce: r.login.nonce, signature: r.login.signature, ticket: t.ticket });
+        signedIn(v.identityKey, r.wallet, !!t.next);
+        go(t.next || r.page || here());
+        return true;
       }
+      // Paired, but no sign-in came with it (an older bWalletX): ask the paired wallet for it the usual way.
+      let ticket = null;
+      const s = await C.signInWithBwalletX({ wallet: r.wallet, challenge: async (identityKey) => { const ch = await post('/api/bwalletx/challenge', identityKey ? { identityKey } : {}); ticket = ch.ticket; return ch; } });
+      const v = await post('/api/bwalletx/verify', { identityKey: s.identityKey, nonce: s.nonce, signature: s.signature, ticket });
+      signedIn(v.identityKey, r.wallet);
+      if (r.page) go(r.page);
+      return true;
+    } catch (e) {
+      failed(e);
+      return false;
     }
   }
   async function disconnect() {
@@ -136,7 +207,10 @@
   // After a reload the session cookie says who you are, but bWalletX only wears this site's theme once the page has
   // talked to it. With an extension or in-app wallet, quietly ask for the identity key again (never pairs).
   const touch = async () => { try { const f = await C.discoverBwalletX?.(800); if (f && f.wallet) await f.wallet.getPublicKey({ identityKey: true }); } catch {} };
-  fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => { setKey(j.identityKey || null); if (j.identityKey) touch(); }).catch(draw);
+  const session = () => fetch('/api/bwalletx/session', { credentials: 'same-origin' }).then((r) => r.json()).then((j) => { setKey(j.identityKey || null); if (j.identityKey) touch(); }).catch(draw);
+  (C.hasReturnFragment?.() ? resumeReturned() : Promise.resolve(false)).then((done) => { if (!done) session(); });
+  // Signed out and back on this tab (say, from bWalletX): the sign-in may have finished in another tab.
+  document.addEventListener('visibilitychange', () => { if (!key && document.visibilityState === 'visible') session(); });
   draw();
   if (!phone && !window.CWI && C.discoverBwalletX) C.discoverBwalletX(800).then((f) => { if (!f && !key) { noWallet = true; draw(); } }).catch(() => {});
 })();
